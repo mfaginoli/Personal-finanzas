@@ -454,6 +454,39 @@ body { background:var(--bg); color:var(--text); font-family:var(--font); font-si
     </div>
   </div>
 
+  <!-- PRESUPUESTO PAGE -->
+  <div class="page" id="page-presupuesto">
+    <div class="section-header">
+      <div class="section-title">Presupuesto</div>
+    </div>
+    <div class="metrics-grid" style="margin-bottom:20px">
+      <div class="metric"><div class="metric-label">Ingreso mensual</div><div class="metric-value" id="pres-ingreso">$0</div></div>
+      <div class="metric"><div class="metric-label">Ahorro objetivo</div><div class="metric-value accent" id="pres-ahorro">$0</div></div>
+      <div class="metric"><div class="metric-label">Gastos fijos</div><div class="metric-value red" id="pres-fijos">$0</div></div>
+      <div class="metric"><div class="metric-label">Disponible variables</div><div class="metric-value green" id="pres-disponible">$0</div></div>
+    </div>
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-title">Disponible semanal real</div>
+      <div style="font-size:32px;font-weight:600;color:var(--green);margin:8px 0" id="pres-semanal">$0</div>
+      <div style="font-size:13px;color:var(--text2)">Después de ahorro y gastos fijos</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Gastos fijos mensuales</div>
+      <div id="pres-fijos-lista" style="margin-bottom:12px"></div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Concepto</label>
+          <input type="text" class="form-input" id="fijo-concepto" placeholder="Ej: Expensas">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Monto ($)</label>
+          <input type="number" class="form-input" id="fijo-monto" placeholder="0">
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="agregarFijo()">Agregar gasto fijo</button>
+    </div>
+  </div>
+
   <!-- INGRESOS PAGE -->
   <div class="page" id="page-ingresos">
     <div class="section-header">
@@ -3233,11 +3266,13 @@ function formatFecha(f) {
 }
 
 // NAVIGATION
-window.showPage = function(page) {
+window.showPage = function(page, el) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-  document.getElementById('page-'+page).classList.add('active');
-  event.target.classList.add('active');
+  const pageEl = document.getElementById('page-'+page);
+  if(pageEl) pageEl.classList.add('active');
+  const target = el || (typeof event !== 'undefined' && event.target);
+  if(target && target.classList) target.classList.add('active');
   if (page === 'gastos') renderGastos();
   if (page === 'presupuesto') renderPresupuesto();
   if (page === 'costos') { updateCosRubros(); renderCostos(); }
@@ -3246,6 +3281,7 @@ window.showPage = function(page) {
   if (page === 'colaboradores') renderColaboradores();
   if (page === 'ingresos') { renderVentas(); renderAlquileres(); renderAdmProp(); renderAdmCons(); renderOtros(); renderCuotas(); }
   if (page === 'balances') renderBalance();
+  if (page === 'presupuesto') renderPresupuesto();
   if (page === 'ahorro') renderAhorro();
   if (page === 'patrimonio') renderPatrimonio();
   if (page === 'recuperos') renderRecuperos();
