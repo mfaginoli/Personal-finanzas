@@ -459,7 +459,6 @@ body { background:var(--bg); color:var(--text); font-family:var(--font); font-si
     <div class="section-header">
       <div class="section-title">Ingresos</div>
     </div>
-
     <div class="inner-tabs">
       <button class="inner-tab active" onclick="showIngresoTab('ventas',this)">Ventas</button>
       <button class="inner-tab" onclick="showIngresoTab('alquileres',this)">Alquileres</button>
@@ -472,15 +471,15 @@ body { background:var(--bg); color:var(--text); font-family:var(--font); font-si
     <div class="tab-content active" id="tab-ventas">
       <div class="metrics-grid">
         <div class="metric"><div class="metric-label">Facturado ventas</div><div class="metric-value accent" id="v-facturado">USD 0</div></div>
-        <div class="metric"><div class="metric-label">Mi ingreso neto</div><div class="metric-value green" id="v-neto">USD 0</div></div>
+        <div class="metric"><div class="metric-label">Mi ingreso total</div><div class="metric-value green" id="v-mi-ingreso">USD 0</div></div>
         <div class="metric"><div class="metric-label">Operaciones</div><div class="metric-value" id="v-ops">0</div></div>
-        <div class="metric"><div class="metric-label">Prom. honorario</div><div class="metric-value gold" id="v-prom">USD 0</div></div>
+        <div class="metric"><div class="metric-label">Honorario prom.</div><div class="metric-value gold" id="v-honor-prom">USD 0</div></div>
       </div>
 
       <div class="card">
-        <div id="ventas-tipo-wrap" class="show-cv" data-tipo-op="cv"><div class="card-title">Nueva operación de venta</div>
+        <div id="ventas-tipo-wrap" class="show-cv" data-tipo-op="cv">
+        <div class="card-title">Nueva operación de venta</div>
 
-        <!-- TIPO DE CLIENTE - selector principal -->
         <div class="form-group">
           <label class="form-label">Tipo de cliente *</label>
           <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:4px">
@@ -493,29 +492,26 @@ body { background:var(--bg); color:var(--text); font-family:var(--font); font-si
 
         <div class="divider"></div>
 
-        <!-- CAMPO PROPIEDAD - solo Vendedor y CV -->
         <div class="form-group v-field cv-field">
           <label class="form-label">Propiedad</label>
           <input type="text" class="form-input" id="v-propiedad" placeholder="Ej: M. Garcia 1371 2B">
         </div>
 
-        <!-- FECHAS -->
         <div class="form-row">
           <div class="form-group v-field cv-field">
-            <label class="form-label" id="lbl-fecha-ingreso-prop">Fecha ingreso propiedad</label>
+            <label class="form-label">Fecha ingreso propiedad</label>
             <input type="date" class="form-input" id="v-fecha-ingreso-prop">
           </div>
           <div class="form-group c-field cv-field">
-            <label class="form-label" id="lbl-fecha-ingreso-lead">Fecha ingreso consulta/lead</label>
+            <label class="form-label">Fecha ingreso consulta/lead</label>
             <input type="date" class="form-input" id="v-fecha-ingreso-lead">
           </div>
         </div>
 
-        <!-- CAPTACIÓN - solo Vendedor y CV -->
         <div class="form-row v-field cv-field">
           <div class="form-group">
             <label class="form-label">Captador</label>
-            <input type="text" class="form-input" id="v-captador" placeholder="Ej: Matias, Gambero">
+            <input type="text" class="form-input" id="v-captador" placeholder="Ej: Matias">
           </div>
           <div class="form-group">
             <label class="form-label">Origen captación</label>
@@ -526,6 +522,7 @@ body { background:var(--bg); color:var(--text); font-family:var(--font); font-si
             </select>
           </div>
         </div>
+
         <div class="form-row v-field cv-field">
           <div class="form-group">
             <label class="form-label">Tipo captación</label>
@@ -539,7 +536,6 @@ body { background:var(--bg); color:var(--text); font-family:var(--font); font-si
           </div>
         </div>
 
-        <!-- LEAD - solo Comprador y CV -->
         <div class="form-row c-field cv-field">
           <div class="form-group">
             <label class="form-label">Origen lead</label>
@@ -554,7 +550,6 @@ body { background:var(--bg); color:var(--text); font-family:var(--font); font-si
           </div>
         </div>
 
-        <!-- PRECIOS Y FECHAS DE OPERACIÓN -->
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">Fecha reserva</label>
@@ -565,6 +560,7 @@ body { background:var(--bg); color:var(--text); font-family:var(--font); font-si
             <input type="number" class="form-input" id="v-precio-cierre" placeholder="0">
           </div>
         </div>
+
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">Fecha de cierre</label>
@@ -575,6 +571,7 @@ body { background:var(--bg); color:var(--text); font-family:var(--font); font-si
             <input type="number" class="form-input" id="v-dias-cierre" placeholder="Auto" readonly>
           </div>
         </div>
+
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">Forma de pago</label>
@@ -589,11 +586,11 @@ body { background:var(--bg); color:var(--text); font-family:var(--font); font-si
         </div>
 
         <div class="divider"></div>
-        <div class="card-title">Honorarios y distribución</div>
+        <div class="card-title">Honorarios</div>
         <div class="form-row-3">
           <div class="form-group">
             <label class="form-label">% Honorario</label>
-            <input type="number" class="form-input" id="v-pct-honor" placeholder="Ej: 3" step="0.1">
+            <input type="number" class="form-input" id="v-pct-honor" placeholder="3" step="0.1">
           </div>
           <div class="form-group">
             <label class="form-label">MF %</label>
@@ -622,7 +619,7 @@ body { background:var(--bg); color:var(--text); font-family:var(--font); font-si
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">Liquidado a La Inmo</label>
-            <select class="form-select" id="v-liq-inmo">
+            <select class="form-select" id="v-liq-inmo" onchange="document.getElementById('v-liq-inmo-fecha-group').style.display=this.value==='si'?'block':'none'">
               <option value="no">Pendiente</option><option value="si">Liquidado</option>
             </select>
           </div>
@@ -634,7 +631,7 @@ body { background:var(--bg); color:var(--text); font-family:var(--font); font-si
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">Liquidado a colaborador</label>
-            <select class="form-select" id="v-liq-colab">
+            <select class="form-select" id="v-liq-colab" onchange="document.getElementById('v-liq-colab-fecha-group').style.display=this.value==='si'?'block':'none'">
               <option value="no">Pendiente</option><option value="si">Liquidado</option>
             </select>
           </div>
@@ -644,8 +641,8 @@ body { background:var(--bg); color:var(--text); font-family:var(--font); font-si
           </div>
         </div>
 
-        </div><div id="v-preview" style="background:#f8fafc;border-radius:8px;padding:14px;margin:12px 0;display:none">
-          <div class="card-title" style="margin-bottom:10px">Resumen de honorarios</div>
+        <div id="v-preview" style="background:#f8fafc;border-radius:8px;padding:14px;margin:12px 0;display:none">
+          <div class="card-title" style="margin-bottom:10px">Resumen</div>
           <div class="form-row-3">
             <div><div class="metric-label">Honorario total</div><div style="font-size:18px;font-weight:500;color:var(--accent)" id="v-prev-total">USD 0</div></div>
             <div><div class="metric-label">Mi ingreso (MF)</div><div style="font-size:18px;font-weight:500;color:var(--green)" id="v-prev-mf">USD 0</div></div>
@@ -656,7 +653,8 @@ body { background:var(--bg); color:var(--text); font-family:var(--font); font-si
           <button class="btn btn-ghost" onclick="calcularVenta()">Calcular</button>
           <button class="btn btn-primary" onclick="guardarVenta()">Guardar operación</button>
         </div>
-
+        </div>
+      </div>
 
       <div class="card">
         <div class="card-title">Operaciones de venta</div>
@@ -962,7 +960,6 @@ body { background:var(--bg); color:var(--text); font-family:var(--font); font-si
         </table>
       </div>
     </div>
-  </div>
 
   <!-- COSTOS -->
   <div class="page" id="page-costos">
