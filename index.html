@@ -478,7 +478,7 @@ body { background:var(--bg); color:var(--text); font-family:var(--font); font-si
       </div>
 
       <div class="card">
-        <div id="ventas-form-card" class="show-cv"><div class="card-title">Nueva operación de venta</div>
+        <div id="ventas-tipo-wrap" class="show-cv" data-tipo-op="cv"><div class="card-title">Nueva operación de venta</div>
 
         <!-- TIPO DE CLIENTE - selector principal -->
         <div class="form-group">
@@ -1857,6 +1857,75 @@ function renderColaboradores() {
     </tr>`).join('') || '<tr><td colspan="6" style="text-align:center;padding:20px;color:#94a3b8">Sin pagos realizados</td></tr>';
 }
 
+// LIQUIDACIONES
+function renderLiquidaciones() {
+  const pendInmo = ventas.filter(v=>!v.liqInmo&&Number(v.pctInmo||0)>0).length;
+  const pendColabV = ventas.filter(v=>!v.liqColab&&Number(v.pctColab||0)>0).length;
+  const pendColabA = alquileres_ops.filter(a=>!a.liqColab&&Number(a.pctColab||0)>0).length;
+  const s=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  s('liq-pend-inmo',pendInmo);
+  s('liq-pend-colab',pendColabV+pendColabA);
+
+  const inmoEl=document.getElementById('liq-inmo-tabla');
+  if(inmoEl){
+    inmoEl.innerHTML=ventas.filter(v=>Number(v.pctInmo||0)>0).map(v=>{
+      const m=Math.round((v.honorarioTotal||0)*(Number(v.pctInmo||0)/100));
+      const estado=v.liqInmo?'si':'no';
+      const lbl=v.liqInmo?'Desmarcar':'Liquidar';
+      const color=v.liqInmo?'#059669':'#dc2626';
+      const txt=v.liqInmo?'✓ '+formatFecha(v.liqInmoFecha):'Pendiente';
+      return `<tr>
+        <td>${v.propiedad||'-'}</td>
+        <td>${formatFecha(v.fechaCierre)}</td>
+        <td>USD ${fmt(Math.round(v.honorarioTotal||0))}</td>
+        <td>USD ${fmt(m)}</td>
+        <td><span style="color:${color};font-weight:500">${txt}</span></td>
+        <td><button class="btn btn-ghost btn-sm" onclick="liqInmoToggle('${v.id}','${estado}')">${lbl}</button></td>
+      </tr>`;
+    }).join('')||'<tr><td colspan="6" class="empty">Sin operaciones con La Inmo</td></tr>';
+  }
+
+  const colabEl=document.getElementById('liq-colab-tabla');
+  if(colabEl){
+    const rowsV=ventas.filter(v=>Number(v.pctColab||0)>0).map(v=>{
+      const m=Math.round((v.honorarioTotal||0)*(Number(v.pctColab||0)/100));
+      const estado=v.liqColab?'si':'no';
+      const color=v.liqColab?'#059669':'#f97316';
+      return `<tr>
+        <td>${v.propiedad||'-'}</td><td>Venta</td>
+        <td>USD ${fmt(m)}</td>
+        <td><span style="color:${color};font-weight:500">${v.liqColab?'✓ Liquidado':'Pendiente'}</span></td>
+        <td><button class="btn btn-ghost btn-sm" onclick="liqColabToggle('${v.id}','venta','${estado}')">${v.liqColab?'Desmarcar':'Liquidar'}</button></td>
+      </tr>`;
+    });
+    const rowsA=alquileres_ops.filter(a=>Number(a.pctColab||0)>0).map(a=>{
+      const m=Math.round((a.honorarioTotal||0)*(Number(a.pctColab||0)/100));
+      const estado=a.liqColab?'si':'no';
+      const color=a.liqColab?'#059669':'#f97316';
+      return `<tr>
+        <td>${a.propiedad||'-'}</td><td>Alquiler</td>
+        <td>$${fmt(m)}</td>
+        <td><span style="color:${color};font-weight:500">${a.liqColab?'✓ Liquidado':'Pendiente'}</span></td>
+        <td><button class="btn btn-ghost btn-sm" onclick="liqColabToggle('${a.id}','alquiler','${estado}')">${a.liqColab?'Desmarcar':'Liquidar'}</button></td>
+      </tr>`;
+    });
+    colabEl.innerHTML=[...rowsV,...rowsA].join('')||'<tr><td colspan="5" class="empty">Sin operaciones con colaboradores</td></tr>';
+  }
+}
+
+window.liqInmoToggle = async function(id, estadoActual) {
+  const nuevoEstado = estadoActual !== 'si';
+  const fecha = nuevoEstado ? new Date().toISOString().split('T')[0] : '';
+  await updateDoc(doc(db,'ventas',id),{liqInmo:nuevoEstado,liqInmoFecha:fecha});
+};
+
+window.liqColabToggle = async function(id, tipo, estadoActual) {
+  const nuevoEstado = estadoActual !== 'si';
+  const fecha = nuevoEstado ? new Date().toISOString().split('T')[0] : '';
+  const col = tipo==='venta' ? 'ventas' : 'alquileres_ops';
+  await updateDoc(doc(db,col,id),{liqColab:nuevoEstado,liqColabFecha:fecha});
+};
+
 // FACTURACION
 window.renderFacturacion = function() {
   const mesFiltro = document.getElementById('fac-mes-filter')?.value || getMesActual();
@@ -3174,6 +3243,7 @@ window.showPage = function(page) {
   if (page === 'presupuesto') renderPresupuesto();
   if (page === 'costos') { updateCosRubros(); renderCostos(); }
   if (page === 'facturacion') renderFacturacion();
+  if (page === 'liquidaciones') renderLiquidaciones();
   if (page === 'colaboradores') renderColaboradores();
   if (page === 'ingresos') { renderVentas(); renderAlquileres(); renderAdmProp(); renderAdmCons(); renderOtros(); renderCuotas(); }
   if (page === 'balances') renderBalance();
