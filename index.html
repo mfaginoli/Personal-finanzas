@@ -2125,6 +2125,8 @@ window.renderDashboardAnalitico = function() {
   setEl('sal-total','USD '+fmt(Math.round(cuotasPend+(cotizacion>0?recuperosPend/cotizacion:0))));
   const liqPendInmo = ventas.filter(v=>!v.liqInmo&&Number(v.pctInmo||0)>0).length;
   const liqPendColab = ventas.filter(v=>!v.liqColab&&Number(v.pctColab||0)>0).length + alquileres_ops.filter(a=>!a.liqColab&&Number(a.pctColab||0)>0).length;
+  const elLI=document.getElementById('dash-liq-inmo'); if(elLI) elLI.textContent=liqPendInmo;
+  const elLC=document.getElementById('dash-liq-colab'); if(elLC) elLC.textContent=liqPendColab;
   const liqEl = document.getElementById('dash-liq-stat');
   if(liqEl) liqEl.innerHTML = `<span style="color:#dc2626;font-weight:500">${liqPendInmo}</span> pend. La Inmo &nbsp;·&nbsp; <span style="color:#f97316;font-weight:500">${liqPendColab}</span> pend. colaboradores <a href="#" onclick="showPage('liquidaciones');return false;" style="color:#0891b2;font-size:11px;margin-left:8px">Ver todas →</a>`;
 
@@ -3244,6 +3246,9 @@ window.showPage = function(page) {
   if (page === 'colaboradores') renderColaboradores();
   if (page === 'ingresos') { renderVentas(); renderAlquileres(); renderAdmProp(); renderAdmCons(); renderOtros(); renderCuotas(); }
   if (page === 'balances') renderBalance();
+  if (page === 'ahorro') renderAhorro();
+  if (page === 'patrimonio') renderPatrimonio();
+  if (page === 'recuperos') renderRecuperos();
 }
 
 // Mostrar/ocultar campo colaborador segun pct
@@ -3277,6 +3282,7 @@ document.addEventListener('change', function(e) {
     </div>
     <div id="ver-venta-content"></div>
   </div>
+</div>
 </div>
 </body>
 </html>
