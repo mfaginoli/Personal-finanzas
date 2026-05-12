@@ -175,6 +175,12 @@ body { background:var(--bg); color:var(--text); font-family:var(--font); font-si
 .inner-tabs { display:flex; gap:4px; margin-bottom:16px; }
 .inner-tab { padding:6px 14px; border-radius:6px; font-size:12px; cursor:pointer; color:var(--text2); background:transparent; border:1px solid var(--border); font-family:var(--font); }
 .inner-tab.active { background:var(--surface2); color:var(--accent); border-color:var(--accent); }
+
+.tipo-op-btn{padding:8px 6px;border-radius:8px;border:1.5px solid #e2e8f0;background:#fff;color:#475569;font-size:12px;cursor:pointer;font-family:inherit;transition:all 0.15s;text-align:center}
+.tipo-op-btn.active{border-color:#0891b2;background:#eff6ff;color:#0891b2;font-weight:500}
+.v-field,.c-field,.cv-field{display:none}
+.show-v .v-field,.show-cv .cv-field,.show-c .c-field{display:block}
+.show-v .form-row.v-field,.show-cv .form-row.cv-field,.show-c .form-row.c-field{display:grid}
 </style>
 </head>
 <body>
@@ -275,7 +281,7 @@ body { background:var(--bg); color:var(--text); font-family:var(--font); font-si
     <!-- SALDOS A COBRAR + PROYECCIÓN -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
       <div class="card" style="padding:20px">
-        <div class="card-title">Saldos a cobrar</div>
+        <div class="card-title" style="display:flex;justify-content:space-between">Saldos a cobrar <span style="font-size:11px;color:#94a3b8;font-weight:400" id="dash-liq-stat"></span></div>
         <div id="dash-saldos">
           <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9">
             <span style="font-size:12px;color:#475569">Cuotas alquileres pendientes</span>
@@ -472,26 +478,41 @@ body { background:var(--bg); color:var(--text); font-family:var(--font); font-si
       </div>
 
       <div class="card">
-        <div class="card-title">Nueva operación de venta</div>
+        <div id="ventas-form-card" class="show-cv"><div class="card-title">Nueva operación de venta</div>
+
+        <!-- TIPO DE CLIENTE - selector principal -->
         <div class="form-group">
+          <label class="form-label">Tipo de cliente *</label>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:4px">
+            <button class="tipo-op-btn active" id="btn-cv" onclick="setTipoOp('cv')">🔄 Comprador - Vendedor</button>
+            <button class="tipo-op-btn" id="btn-v" onclick="setTipoOp('v')">🏠 Vendedor</button>
+            <button class="tipo-op-btn" id="btn-c" onclick="setTipoOp('c')">👤 Comprador</button>
+          </div>
+          <div style="font-size:11px;color:#94a3b8" id="tipo-op-desc">Manejás captación y comprador</div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- CAMPO PROPIEDAD - solo Vendedor y CV -->
+        <div class="form-group v-field cv-field">
           <label class="form-label">Propiedad</label>
           <input type="text" class="form-input" id="v-propiedad" placeholder="Ej: M. Garcia 1371 2B">
         </div>
+
+        <!-- FECHAS -->
         <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Fecha de ingreso</label>
-            <input type="date" class="form-input" id="v-fecha-ingreso">
+          <div class="form-group v-field cv-field">
+            <label class="form-label" id="lbl-fecha-ingreso-prop">Fecha ingreso propiedad</label>
+            <input type="date" class="form-input" id="v-fecha-ingreso-prop">
           </div>
-          <div class="form-group">
-            <label class="form-label">Tipo de cliente</label>
-            <select class="form-select" id="v-tipo-cliente">
-              <option>Vendedor - Comprador</option>
-              <option>Vendedor</option>
-              <option>Comprador</option>
-            </select>
+          <div class="form-group c-field cv-field">
+            <label class="form-label" id="lbl-fecha-ingreso-lead">Fecha ingreso consulta/lead</label>
+            <input type="date" class="form-input" id="v-fecha-ingreso-lead">
           </div>
         </div>
-        <div class="form-row">
+
+        <!-- CAPTACIÓN - solo Vendedor y CV -->
+        <div class="form-row v-field cv-field">
           <div class="form-group">
             <label class="form-label">Captador</label>
             <input type="text" class="form-input" id="v-captador" placeholder="Ej: Matias, Gambero">
@@ -499,24 +520,17 @@ body { background:var(--bg); color:var(--text); font-family:var(--font); font-si
           <div class="form-group">
             <label class="form-label">Origen captación</label>
             <select class="form-select" id="v-origen">
-              <option>ZonaProp</option>
-              <option>Referido</option>
-              <option>Amigo</option>
-              <option>Cliente</option>
-              <option>Colega</option>
-              <option>LaInmo</option>
-              <option>Adm. / Ref</option>
-              <option>Otro</option>
+              <option>ZonaProp</option><option>Referido</option><option>Amigo</option>
+              <option>Cliente</option><option>Colega</option><option>LaInmo</option>
+              <option>Adm. / Ref</option><option>Otro</option>
             </select>
           </div>
         </div>
-        <div class="form-row">
+        <div class="form-row v-field cv-field">
           <div class="form-group">
             <label class="form-label">Tipo captación</label>
             <select class="form-select" id="v-tipo-captacion">
-              <option>Exclusiva</option>
-              <option>Compartida</option>
-              <option>Sin exclusiva</option>
+              <option>Exclusiva</option><option>Compartida</option><option>Sin exclusiva</option>
             </select>
           </div>
           <div class="form-group">
@@ -524,6 +538,23 @@ body { background:var(--bg); color:var(--text); font-family:var(--font); font-si
             <input type="number" class="form-input" id="v-precio-pub" placeholder="0">
           </div>
         </div>
+
+        <!-- LEAD - solo Comprador y CV -->
+        <div class="form-row c-field cv-field">
+          <div class="form-group">
+            <label class="form-label">Origen lead</label>
+            <select class="form-select" id="v-origen-lead">
+              <option>ZonaProp</option><option>Selecta</option><option>Majo</option>
+              <option>Vane</option><option>Colega</option><option>Referido</option><option>Otro</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Manejo de lead</label>
+            <input type="text" class="form-input" id="v-lead" placeholder="Ej: Matias, Sol">
+          </div>
+        </div>
+
+        <!-- PRECIOS Y FECHAS DE OPERACIÓN -->
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">Fecha reserva</label>
@@ -541,34 +572,14 @@ body { background:var(--bg); color:var(--text); font-family:var(--font); font-si
           </div>
           <div class="form-group">
             <label class="form-label">Días de cierre</label>
-            <input type="number" class="form-input" id="v-dias-cierre" placeholder="Calculado automático" readonly>
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Origen lead</label>
-            <select class="form-select" id="v-origen-lead">
-              <option>ZonaProp</option>
-              <option>Selecta</option>
-              <option>Majo</option>
-              <option>Vane</option>
-              <option>Colega</option>
-              <option>Referido</option>
-              <option>Otro</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Manejo de lead</label>
-            <input type="text" class="form-input" id="v-lead" placeholder="Ej: Matias, Sol">
+            <input type="number" class="form-input" id="v-dias-cierre" placeholder="Auto" readonly>
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">Forma de pago</label>
             <select class="form-select" id="v-forma-pago">
-              <option>Contado</option>
-              <option>Crédito</option>
-              <option>Financiación propia</option>
+              <option>Contado</option><option>Crédito</option><option>Financiación propia</option>
             </select>
           </div>
           <div class="form-group">
@@ -578,49 +589,74 @@ body { background:var(--bg); color:var(--text); font-family:var(--font); font-si
         </div>
 
         <div class="divider"></div>
-        <div class="card-title">Honorarios</div>
+        <div class="card-title">Honorarios y distribución</div>
         <div class="form-row-3">
           <div class="form-group">
             <label class="form-label">% Honorario</label>
             <input type="number" class="form-input" id="v-pct-honor" placeholder="Ej: 3" step="0.1">
           </div>
           <div class="form-group">
-            <label class="form-label">MF (mi parte) %</label>
-            <input type="number" class="form-input" id="v-pct-mf" placeholder="Ej: 75" value="75">
+            <label class="form-label">MF %</label>
+            <input type="number" class="form-input" id="v-pct-mf" value="75">
           </div>
           <div class="form-group">
             <label class="form-label">La Inmo %</label>
-            <input type="number" class="form-input" id="v-pct-inmo" placeholder="Ej: 25" value="25">
+            <input type="number" class="form-input" id="v-pct-inmo" value="25">
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">Colaborador %</label>
-            <input type="number" class="form-input" id="v-pct-colab" placeholder="0" value="0">
+            <input type="number" class="form-input" id="v-pct-colab" value="0">
           </div>
           <div class="form-group">
             <label class="form-label">¿Facturado?</label>
             <select class="form-select" id="v-facturado-check">
-              <option value="no">No facturado</option>
-              <option value="si">Facturado</option>
+              <option value="no">No facturado</option><option value="si">Facturado</option>
             </select>
           </div>
         </div>
 
-        <div id="v-preview" style="background:#f8fafc;border-radius:8px;padding:14px;margin:12px 0;display:none">
+        <div class="divider"></div>
+        <div class="card-title">Liquidaciones</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Liquidado a La Inmo</label>
+            <select class="form-select" id="v-liq-inmo">
+              <option value="no">Pendiente</option><option value="si">Liquidado</option>
+            </select>
+          </div>
+          <div class="form-group" id="v-liq-inmo-fecha-group" style="display:none">
+            <label class="form-label">Fecha liquidación La Inmo</label>
+            <input type="date" class="form-input" id="v-liq-inmo-fecha">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Liquidado a colaborador</label>
+            <select class="form-select" id="v-liq-colab">
+              <option value="no">Pendiente</option><option value="si">Liquidado</option>
+            </select>
+          </div>
+          <div class="form-group" id="v-liq-colab-fecha-group" style="display:none">
+            <label class="form-label">Fecha liquidación colaborador</label>
+            <input type="date" class="form-input" id="v-liq-colab-fecha">
+          </div>
+        </div>
+
+        </div><div id="v-preview" style="background:#f8fafc;border-radius:8px;padding:14px;margin:12px 0;display:none">
           <div class="card-title" style="margin-bottom:10px">Resumen de honorarios</div>
           <div class="form-row-3">
             <div><div class="metric-label">Honorario total</div><div style="font-size:18px;font-weight:500;color:var(--accent)" id="v-prev-total">USD 0</div></div>
             <div><div class="metric-label">Mi ingreso (MF)</div><div style="font-size:18px;font-weight:500;color:var(--green)" id="v-prev-mf">USD 0</div></div>
-            <div><div class="metric-label">Margen precio</div><div style="font-size:18px;font-weight:500;color:var(--text)" id="v-prev-margen">0%</div></div>
+            <div><div class="metric-label">Margen negociación</div><div style="font-size:18px;font-weight:500" id="v-prev-margen">0%</div></div>
           </div>
         </div>
-
         <div style="display:flex;gap:10px;margin-top:8px">
           <button class="btn btn-ghost" onclick="calcularVenta()">Calcular</button>
           <button class="btn btn-primary" onclick="guardarVenta()">Guardar operación</button>
         </div>
-      </div>
+
 
       <div class="card">
         <div class="card-title">Operaciones de venta</div>
@@ -1308,6 +1344,41 @@ body { background:var(--bg); color:var(--text); font-family:var(--font); font-si
     </div>
   </div>
 
+  <!-- LIQUIDACIONES -->
+  <div class="page" id="page-liquidaciones">
+    <div class="section-header">
+      <div class="section-title">Liquidaciones pendientes</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">
+      <div class="card" style="padding:16px">
+        <div style="font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px">Pend. La Inmo (Ventas)</div>
+        <div style="font-size:24px;font-weight:500;color:#dc2626" id="liq-pend-inmo">0</div>
+        <div style="font-size:11px;color:#94a3b8;margin-top:2px">operaciones</div>
+      </div>
+      <div class="card" style="padding:16px">
+        <div style="font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px">Pend. colaboradores</div>
+        <div style="font-size:24px;font-weight:500;color:#f97316" id="liq-pend-colab">0</div>
+        <div style="font-size:11px;color:#94a3b8;margin-top:2px">operaciones</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-title">Liquidaciones a La Inmo — Ventas</div>
+      <table class="data-table">
+        <thead><tr><th>Propiedad</th><th>Cierre</th><th>Honor. total</th><th>La Inmo</th><th>Estado</th><th></th></tr></thead>
+        <tbody id="liq-inmo-tabla"></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Liquidaciones a colaboradores</div>
+      <table class="data-table">
+        <thead><tr><th>Operación</th><th>Tipo</th><th>Monto colaborador</th><th>Estado</th><th></th></tr></thead>
+        <tbody id="liq-colab-tabla"></tbody>
+      </table>
+    </div>
+  </div>
+
   <!-- BALANCES -->
   <div class="page" id="page-balances">
     <div class="section-header">
@@ -1986,6 +2057,10 @@ window.renderDashboardAnalitico = function() {
   setEl('sal-factsin',factSin+' ops sin facturar');
   setEl('sal-recuperos','$'+fmt(recuperosPend));
   setEl('sal-total','USD '+fmt(Math.round(cuotasPend+(cotizacion>0?recuperosPend/cotizacion:0))));
+  const liqPendInmo = ventas.filter(v=>!v.liqInmo&&Number(v.pctInmo||0)>0).length;
+  const liqPendColab = ventas.filter(v=>!v.liqColab&&Number(v.pctColab||0)>0).length + alquileres_ops.filter(a=>!a.liqColab&&Number(a.pctColab||0)>0).length;
+  const liqEl = document.getElementById('dash-liq-stat');
+  if(liqEl) liqEl.innerHTML = `<span style="color:#dc2626;font-weight:500">${liqPendInmo}</span> pend. La Inmo &nbsp;·&nbsp; <span style="color:#f97316;font-weight:500">${liqPendColab}</span> pend. colaboradores <a href="#" onclick="showPage('liquidaciones');return false;" style="color:#0891b2;font-size:11px;margin-left:8px">Ver todas →</a>`;
 
   // PROYECCIÓN
   const prom3=[1,2,3].reduce((a,i)=>a+getIngresosUSD(getMesPrev(mesSel,i)).total,0)/3;
@@ -2582,6 +2657,28 @@ window.calcularVenta = function() {
   document.getElementById('v-preview').style.display = 'block';
 }
 
+
+window.setTipoOp = function(tipo) {
+  const wrap = document.getElementById('ventas-tipo-wrap');
+  if(!wrap) return;
+  wrap.className = 'show-'+tipo;
+  ['cv','v','c'].forEach(t => {
+    const btn = document.getElementById('btn-'+t);
+    if(btn) btn.classList.toggle('active', t===tipo);
+  });
+  const descs = {cv:'Manejás captación y comprador', v:'Tenés la propiedad, otro trae el comprador', c:'Traés el comprador, otro tiene la propiedad'};
+  const d = document.getElementById('tipo-op-desc');
+  if(d) d.textContent = descs[tipo];
+  wrap.dataset.tipoOp = tipo;
+};
+
+document.getElementById('v-liq-inmo')?.addEventListener('change', function() {
+  document.getElementById('v-liq-inmo-fecha-group').style.display = this.value==='si'?'block':'none';
+});
+document.getElementById('v-liq-colab')?.addEventListener('change', function() {
+  document.getElementById('v-liq-colab-fecha-group').style.display = this.value==='si'?'block':'none';
+});
+
 window.guardarVenta = async function() {
   const propiedad = document.getElementById('v-propiedad').value.trim();
   const fechaCierre = document.getElementById('v-fecha-cierre').value;
@@ -2616,6 +2713,13 @@ window.guardarVenta = async function() {
     origenLead: document.getElementById('v-origen-lead').value,
     margen, diasCierre,
     facturado: document.getElementById('v-facturado-check').value === 'si',
+    tipoOp: document.getElementById('ventas-tipo-wrap')?.dataset.tipoOp||'cv',
+    fechaIngresoProp: document.getElementById('v-fecha-ingreso-prop')?.value||'',
+    fechaIngresoLead: document.getElementById('v-fecha-ingreso-lead')?.value||'',
+    liqInmo: document.getElementById('v-liq-inmo')?.value==='si',
+    liqInmoFecha: document.getElementById('v-liq-inmo-fecha')?.value||'',
+    liqColab: document.getElementById('v-liq-colab')?.value==='si',
+    liqColabFecha: document.getElementById('v-liq-colab-fecha')?.value||'',
     createdAt: new Date().toISOString()
   });
   alert('Operación guardada');
