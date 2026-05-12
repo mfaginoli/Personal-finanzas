@@ -2088,11 +2088,20 @@ window.renderDashboardAnalitico = function() {
   if(sub) sub.textContent = mesSel;
 
   function getIngresosUSD(mes) {
-    const v = ventas.filter(x=>x.fechaCierre&&x.fechaCierre.startsWith(mes)).reduce((a,x)=>a+Number(x.honorarioTotal||0),0);
-    const al = alquileres_ops.filter(x=>x.fecha&&x.fecha.startsWith(mes)).reduce((a,x)=>a+Number(x.honorarioTotal||0),0);
-    const ap = adm_props.filter(x=>x.mes===mes).reduce((a,x)=>a+Number(x.montoUSD||0),0);
-    const ac = adm_cons_ops.filter(x=>x.mes===mes).reduce((a,x)=>a+Number(x.netoUSD||0),0);
-    const ot = otros_ingresos.filter(x=>x.fecha&&x.fecha.startsWith(mes)).reduce((a,x)=>a+(Number(x.montoUSD||0)||(cotizacion>0?Number(x.montoARS||0)/cotizacion:0)),0);
+    // Ventas: usar miIngreso (ya en USD, es la parte MF)
+    const v = ventas.filter(x=>x.fechaCierre&&x.fechaCierre.startsWith(mes)).reduce((a,x)=>a+Number(x.miIngreso||x.honorarioTotal||0),0);
+    // Alquileres: usar cuotas cobradas en ese mes (o todas las del mes si no hay cobradas)
+    const cuotasMes = cuotas_data.filter(c=>c.fechaCobro&&c.fechaCobro.startsWith(mes));
+    const al = cuotasMes.length > 0
+      ? cuotasMes.reduce((a,c)=>a+Number(c.monto||0),0)
+      : alquileres_ops.filter(x=>x.fecha&&x.fecha.startsWith(mes)).reduce((a,x)=>a+Number(x.miIngreso||0),0);
+    // Adm Propiedades: montoUSD guardado
+    const ap = adm_props.filter(x=>x.mes===mes).reduce((a,x)=>a+Number(x.montoUSD||x.miIngreso||0),0);
+    // Adm Consorcios: netoUSD o miIngreso
+    const ac = adm_cons_ops.filter(x=>x.mes===mes).reduce((a,x)=>a+Number(x.netoUSD||x.miIngreso||0),0);
+    // Otros
+    const cotiz = cotizacion > 0 ? cotizacion : 1;
+    const ot = otros_ingresos.filter(x=>x.fecha&&x.fecha.startsWith(mes)).reduce((a,x)=>a+(Number(x.montoUSD||0)||(Number(x.montoARS||0)/cotiz)),0);
     return {v,al,ap,ac,ot,total:v+al+ap+ac+ot};
   }
   function getCostosARS(mes) {
@@ -2119,7 +2128,7 @@ window.renderDashboardAnalitico = function() {
   const pctAhorroReal = ingConf>0?(ahorrosMes/ingConf*100).toFixed(1):null;
 
   setEl('kpi-ingresos','USD '+fmt(Math.round(ingMes.total)));
-  setEl('kpi-ingresos-var',varIng!==null?`<span style="color:${varIng>=0?'#059669':'#dc2626'}">${varIng>=0?'▲':'▼'} ${Math.abs(varIng)}% vs mes ant.</span>`:'<span style="color:#94a3b8">Sin datos anteriores</span>');
+  setEl('kpi-ingresos-var',varIng!==null?`<span style="color:${varIng>=0?'#059669':'#dc2626'}">${varIng>=0?'▲':'▼'} ${Math.abs(varIng)}% vs mes ant.</span><br><span style="color:#94a3b8;font-size:10px">Mes ant: USD ${fmt(Math.round(ingMesAnt.total))}</span>`:'<span style="color:#94a3b8">Sin datos anteriores</span>');
   setEl('kpi-costos','$'+fmt(costosMes));
   setEl('kpi-costos-var',varCos!==null?`<span style="color:${varCos<=0?'#059669':'#dc2626'}">${varCos<=0?'▼':'▲'} ${Math.abs(varCos)}% vs mes ant.</span>`:'<span style="color:#94a3b8">Sin datos anteriores</span>');
   const netoEl=document.getElementById('kpi-neto');
@@ -2138,12 +2147,17 @@ window.renderDashboardAnalitico = function() {
     const colors={v:'#0891b2',al:'#8b5cf6',ap:'#06b6d4',ac:'#10b981',ot:'#f59e0b'};
     const keys=['v','al','ap','ac','ot'];
     chartEl.innerHTML=datos6.map(d=>{
-      const bar=keys.map(k=>`<div style="background:${colors[k]};height:${Math.round(d[k]/maxVal*175)}px;width:100%;min-height:${d[k]>0?2:0}px" title="USD ${fmt(Math.round(d[k]))}"></div>`).join('');
+      const totalH = 175;
+      const bars = keys.filter(k=>d[k]>0).map(k=>{
+        const h = Math.round(d[k]/maxVal*totalH);
+        return `<div style="background:${colors[k]};height:${h}px;width:100%" title="${k.toUpperCase()}: USD ${fmt(Math.round(d[k]))}"></div>`;
+      }).reverse().join('');
       const label=d.mes.split('-')[1]+'/'+d.mes.split('-')[0].slice(2);
+      const esSeleccionado = d.mes === mesSel;
       return `<div style="flex:1;display:flex;flex-direction:column;align-items:center">
-        <div style="font-size:9px;color:#94a3b8;margin-bottom:3px">${d.total>0?'USD '+fmt(Math.round(d.total)):''}</div>
-        <div style="display:flex;flex-direction:column-reverse;width:100%;gap:1px;height:175px">${bar}</div>
-        <div style="font-size:10px;color:#64748b;margin-top:5px">${label}</div>
+        <div style="font-size:9px;color:${esSeleccionado?'#0891b2':'#94a3b8'};margin-bottom:3px;font-weight:${esSeleccionado?'600':'400'}">${d.total>0?'USD '+fmt(Math.round(d.total)):''}</div>
+        <div style="display:flex;flex-direction:column-reverse;width:90%;height:${totalH}px;border-radius:4px;overflow:hidden;background:#f1f5f9">${bars}</div>
+        <div style="font-size:10px;color:${esSeleccionado?'#0891b2':'#64748b'};margin-top:5px;font-weight:${esSeleccionado?'600':'400'}">${label}</div>
       </div>`;
     }).join('');
   }
