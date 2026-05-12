@@ -2064,7 +2064,7 @@ window.toggleFacturado = async function(coleccion, id, current) {
   renderFacturacion();
 }
 
-function renderAll() { renderDashboard(); renderGastos(); }
+function renderAll() { renderDashboard(); if(typeof renderGastos === 'function') renderGastos(); }
 
 function renderDashboard() { renderDashboardAnalitico(); }
 
@@ -2601,22 +2601,27 @@ function initIngresos() {
   onSnapshot(query(collection(db,"ventas"), orderBy("fechaCierre","desc")), snap => {
     ventas = snap.docs.map(d=>({id:d.id,...d.data()}));
     renderVentas();
+    if(document.getElementById('page-dashboard')?.classList.contains('active')) renderDashboard();
   });
   onSnapshot(query(collection(db,"alquileres_ops"), orderBy("fecha","desc")), snap => {
     alquileres_ops = snap.docs.map(d=>({id:d.id,...d.data()}));
     renderAlquileres();
+    if(document.getElementById('page-dashboard')?.classList.contains('active')) renderDashboard();
   });
   onSnapshot(query(collection(db,"adm_props"), orderBy("mes","desc")), snap => {
     adm_props = snap.docs.map(d=>({id:d.id,...d.data()}));
     renderAdmProp();
+    if(document.getElementById('page-dashboard')?.classList.contains('active')) renderDashboard();
   });
   onSnapshot(query(collection(db,"adm_cons_ops"), orderBy("mes","desc")), snap => {
     adm_cons_ops = snap.docs.map(d=>({id:d.id,...d.data()}));
     renderAdmCons();
+    if(document.getElementById('page-dashboard')?.classList.contains('active')) renderDashboard();
   });
   onSnapshot(query(collection(db,"otros_ingresos"), orderBy("fecha","desc")), snap => {
     otros_ingresos = snap.docs.map(d=>({id:d.id,...d.data()}));
     renderOtros();
+    if(document.getElementById('page-dashboard')?.classList.contains('active')) renderDashboard();
   });
 }
 
