@@ -217,85 +217,129 @@ body { background:var(--bg); color:var(--text); font-family:var(--font); font-si
   <!-- DASHBOARD -->
   <div class="page active" id="page-dashboard">
     <div class="section-header">
-      <div class="section-title">Dashboard</div>
-      <div style="font-size:12px;color:var(--text3)" id="dash-mes"></div>
-    </div>
-
-    <div class="metrics-grid">
-      <div class="metric">
-        <div class="metric-label">Gastos del mes</div>
-        <div class="metric-value red" id="d-gastos">$0</div>
-        <div class="metric-sub" id="d-gastos-sub"></div>
-      </div>
-      <div class="metric">
-        <div class="metric-label">Ahorro del mes</div>
-        <div class="metric-value gold" id="d-ahorro">$0</div>
-        <div class="metric-sub">Objetivo 40%</div>
-      </div>
-      <div class="metric">
-        <div class="metric-label">Patrimonio total</div>
-        <div class="metric-value accent" id="d-patrimonio">USD 0</div>
-        <div class="metric-sub" id="d-patrimonio-sub"></div>
-      </div>
-      <div class="metric">
-        <div class="metric-label">A recuperar</div>
-        <div class="metric-value" id="d-recuperos">$0</div>
-        <div class="metric-sub">De la empresa</div>
+      <div class="section-title">Dashboard Financiero</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <select id="dash-mes-sel" onchange="renderDashboardAnalitico()" style="font-size:12px;padding:5px 10px;border:1px solid #e2e8f0;border-radius:6px;background:#fff;font-family:inherit">
+          <option value="">Este mes</option>
+        </select>
+        <span style="font-size:12px;color:#94a3b8" id="dash-subtitle"></span>
       </div>
     </div>
 
-    <div class="two-col">
-      <div class="card">
-        <div class="card-title">Presupuesto semanal</div>
-        <div id="presupuesto-content">
-          <div style="color:var(--text3);font-size:13px">Configurá tu ingreso mensual en Ajustes para ver el presupuesto semanal.</div>
-        </div>
+    <!-- KPIs -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px" id="dash-kpis">
+      <div class="card" style="padding:16px">
+        <div style="font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px">Ingresos del mes</div>
+        <div style="font-size:26px;font-weight:500;color:#0891b2" id="kpi-ingresos">USD 0</div>
+        <div style="font-size:11px;margin-top:4px" id="kpi-ingresos-var"></div>
       </div>
-      <div class="card">
-        <div class="card-title">Gastos por rubro — este mes</div>
-        <div id="dash-rubros"></div>
+      <div class="card" style="padding:16px">
+        <div style="font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px">Costos del mes</div>
+        <div style="font-size:26px;font-weight:500;color:#dc2626" id="kpi-costos">$0</div>
+        <div style="font-size:11px;margin-top:4px" id="kpi-costos-var"></div>
       </div>
-    </div>
-
-    <div class="card" style="margin-top:0">
-      <div class="card-title" style="display:flex;justify-content:space-between;align-items:center">
-        <span>Cierre de mes — disponible para ahorrar</span>
-        <span id="mes-estado-badge" class="badge badge-gold">Mes en curso</span>
+      <div class="card" style="padding:16px">
+        <div style="font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px">Resultado neto</div>
+        <div style="font-size:26px;font-weight:500" id="kpi-neto">USD 0</div>
+        <div style="font-size:11px;margin-top:4px" id="kpi-neto-sub"></div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:16px;margin-bottom:14px">
-        <div>
-          <div class="metric-label">Ingreso mensual</div>
-          <div style="font-size:20px;font-weight:500;color:var(--accent)" id="cierre-ingreso">$0</div>
-        </div>
-        <div>
-          <div class="metric-label">Gastos del mes</div>
-          <div style="font-size:20px;font-weight:500;color:var(--red)" id="cierre-gastos">$0</div>
-        </div>
-        <div>
-          <div class="metric-label">Sobrante en pesos</div>
-          <div style="font-size:20px;font-weight:500;color:var(--green)" id="cierre-sobrante">$0</div>
-        </div>
-        <div>
-          <div class="metric-label">Equivalente USD</div>
-          <div style="font-size:20px;font-weight:500;color:var(--gold)" id="cierre-usd">USD 0</div>
-        </div>
-      </div>
-      <div class="budget-bar" style="margin-bottom:8px"><div class="budget-fill" id="cierre-bar" style="width:0%"></div></div>
-      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3)">
-        <span id="cierre-pct-label">0% del ingreso gastado</span>
-        <span id="cierre-aviso" style="color:var(--gold)"></span>
+      <div class="card" style="padding:16px">
+        <div style="font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px">Ahorro real</div>
+        <div style="font-size:26px;font-weight:500;color:#d97706" id="kpi-ahorro">0%</div>
+        <div style="font-size:11px;margin-top:4px" id="kpi-ahorro-sub"></div>
       </div>
     </div>
 
-    <div class="card" style="margin-top:0">
-      <div class="card-title">Últimos gastos</div>
-      <table class="data-table" id="dash-ultimos">
-        <thead><tr><th>Fecha</th><th>Rubro</th><th>Descripción</th><th>Monto</th></tr></thead>
-        <tbody id="dash-ultimos-body"></tbody>
-      </table>
+    <!-- GRÁFICO INGRESOS POR RUBRO (últimos 6 meses) -->
+    <div class="card" style="margin-bottom:16px;padding:20px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div class="card-title" style="margin-bottom:0">Ingresos por rubro — últimos 6 meses (USD)</div>
+      </div>
+      <div id="chart-ingresos" style="height:200px;display:flex;align-items:flex-end;gap:8px;border-bottom:1px solid #e2e8f0;padding-bottom:0;position:relative">
+        <div style="position:absolute;top:0;left:0;right:0;bottom:0;display:flex;flex-direction:column;justify-content:space-between;pointer-events:none">
+          <div style="border-bottom:1px dashed #e2e8f0;height:0;width:100%"></div>
+          <div style="border-bottom:1px dashed #e2e8f0;height:0;width:100%"></div>
+          <div style="border-bottom:1px dashed #e2e8f0;height:0;width:100%"></div>
+          <div style="border-bottom:1px dashed #e2e8f0;height:0;width:100%"></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:12px;margin-top:10px;flex-wrap:wrap" id="chart-legend">
+        <span style="font-size:11px;display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#0891b2;display:inline-block"></span>Ventas</span>
+        <span style="font-size:11px;display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#8b5cf6;display:inline-block"></span>Alquileres</span>
+        <span style="font-size:11px;display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#06b6d4;display:inline-block"></span>Adm. Prop.</span>
+        <span style="font-size:11px;display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#10b981;display:inline-block"></span>Adm. Cons.</span>
+        <span style="font-size:11px;display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#f59e0b;display:inline-block"></span>Otros</span>
+      </div>
     </div>
 
-    <!-- CONFIGURACION -->
+    <!-- SALDOS A COBRAR + PROYECCIÓN -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+      <div class="card" style="padding:20px">
+        <div class="card-title">Saldos a cobrar</div>
+        <div id="dash-saldos">
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9">
+            <span style="font-size:12px;color:#475569">Cuotas alquileres pendientes</span>
+            <span style="font-size:13px;font-weight:500;color:#dc2626" id="sal-cuotas">USD 0</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9">
+            <span style="font-size:12px;color:#475569">Facturado sin cobrar</span>
+            <span style="font-size:13px;font-weight:500;color:#d97706" id="sal-factsin">USD 0</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9">
+            <span style="font-size:12px;color:#475569">Recuperos pendientes</span>
+            <span style="font-size:13px;font-weight:500;color:#f97316" id="sal-recuperos">$0</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:8px 0">
+            <span style="font-size:12px;font-weight:600;color:#0f172a">Total a cobrar (equiv.)</span>
+            <span style="font-size:14px;font-weight:600;color:#0891b2" id="sal-total">USD 0</span>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="padding:20px">
+        <div class="card-title">Proyección próximos 90 días</div>
+        <div id="dash-proyeccion">
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9">
+            <span style="font-size:12px;color:#475569">Próximos 30 días</span>
+            <span style="font-size:13px;font-weight:500;color:#059669" id="proy-30">USD 0</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9">
+            <span style="font-size:12px;color:#475569">Próximos 60 días</span>
+            <span style="font-size:13px;font-weight:500;color:#0891b2" id="proy-60">USD 0</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9">
+            <span style="font-size:12px;color:#475569">Próximos 90 días</span>
+            <span style="font-size:13px;font-weight:500;color:#6366f1" id="proy-90">USD 0</span>
+          </div>
+          <div style="margin-top:10px;padding:10px;background:#f0fdf4;border-radius:8px">
+            <div style="font-size:11px;color:#16a34a;font-weight:500">Ingreso promedio mensual (últ. 3 meses)</div>
+            <div style="font-size:18px;font-weight:600;color:#15803d;margin-top:2px" id="proy-prom">USD 0</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- COSTOS + RATIO -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+      <div class="card" style="padding:20px">
+        <div class="card-title">Costos por área — este mes ($)</div>
+        <div id="dash-costos-area"></div>
+      </div>
+      <div class="card" style="padding:20px">
+        <div class="card-title">Ratio ingreso / costo por área</div>
+        <div id="dash-ratio-area"></div>
+      </div>
+    </div>
+
+    <!-- PATRIMONIO -->
+    <div class="card" style="margin-bottom:16px;padding:20px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div class="card-title" style="margin-bottom:0">Patrimonio (USD)</div>
+        <span style="font-size:20px;font-weight:600;color:#d97706" id="dash-patrimonio-total">USD 0</span>
+      </div>
+      <div id="dash-patrimonio-detalle" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px"></div>
+    </div>
+
+    <!-- CONFIGURACIÓN -->
     <div class="card">
       <div class="card-title">Configuración del presupuesto</div>
       <div class="form-row">
@@ -309,63 +353,6 @@ body { background:var(--bg); color:var(--text); font-family:var(--font); font-si
         </div>
       </div>
       <button class="btn btn-primary" onclick="guardarConfig()">Guardar configuración</button>
-    </div>
-  </div>
-
-  <!-- PRESUPUESTO -->
-  <div class="page" id="page-presupuesto">
-    <div class="section-header">
-      <div class="section-title">Presupuesto mensual</div>
-    </div>
-
-    <div class="metrics-grid">
-      <div class="metric"><div class="metric-label">Ingreso mensual</div><div class="metric-value accent" id="pres-ingreso">$0</div></div>
-      <div class="metric"><div class="metric-label">Ahorro objetivo (40%)</div><div class="metric-value gold" id="pres-ahorro">$0</div></div>
-      <div class="metric"><div class="metric-label">Gastos fijos estimados</div><div class="metric-value red" id="pres-fijos">$0</div></div>
-      <div class="metric"><div class="metric-label">Disponible variables/semana</div><div class="metric-value green" id="pres-semanal">$0</div></div>
-    </div>
-
-    <div class="two-col">
-      <div class="card">
-        <div class="card-title">Gastos fijos mensuales estimados</div>
-        <div style="font-size:12px;color:var(--text3);margin-bottom:14px">Estos montos se descuentan automáticamente del disponible desde el día 1 del mes.</div>
-
-        <div style="display:flex;flex-direction:column;gap:8px" id="fijos-lista"></div>
-
-        <div class="divider"></div>
-        <div class="card-title">Agregar gasto fijo</div>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Rubro</label>
-            <select class="form-select" id="fijo-rubro">
-              <option>Alquiler / Expensas</option>
-              <option>Servicios (luz, gas, agua, internet)</option>
-              <option>Seguro de vehículo</option>
-              <option>Patente / Impuestos vehículo</option>
-              <option>Obra social / Prepaga</option>
-              <option>Monotributo</option>
-              <option>Impuestos generales</option>
-              <option>Contador / Honorarios</option>
-              <option>Cuotas / Financiación</option>
-              <option>Gimnasio / Deporte</option>
-              <option>Otro fijo</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Monto mensual estimado ($)</label>
-            <input type="number" class="form-input" id="fijo-monto" placeholder="0">
-          </div>
-        </div>
-        <button class="btn btn-primary" onclick="agregarFijo()">Agregar</button>
-      </div>
-
-      <div class="card">
-        <div class="card-title">Resumen del mes</div>
-        <div id="pres-resumen"></div>
-        <div class="divider"></div>
-        <div class="card-title">Presupuesto semanal detallado</div>
-        <div id="pres-semanal-detalle"></div>
-      </div>
     </div>
   </div>
 
@@ -620,7 +607,126 @@ body { background:var(--bg); color:var(--text); font-family:var(--font); font-si
           </div>
         </div>
 
-        <div id="al-preview" style="background:var(--surface2);border-radius:var(--r-sm);padding:14px;margin:12px 0;display:none">
+        <div id="v-preview" style="background:#f8fafc;border-radius:8px;padding:14px;margin:12px 0;display:none">
+          <div class="card-title" style="margin-bottom:10px">Resumen de honorarios</div>
+          <div class="form-row-3">
+            <div><div class="metric-label">Honorario total</div><div style="font-size:18px;font-weight:500;color:var(--accent)" id="v-prev-total">USD 0</div></div>
+            <div><div class="metric-label">Mi ingreso (MF)</div><div style="font-size:18px;font-weight:500;color:var(--green)" id="v-prev-mf">USD 0</div></div>
+            <div><div class="metric-label">Margen precio</div><div style="font-size:18px;font-weight:500;color:var(--text)" id="v-prev-margen">0%</div></div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px;margin-top:8px">
+          <button class="btn btn-ghost" onclick="calcularVenta()">Calcular</button>
+          <button class="btn btn-primary" onclick="guardarVenta()">Guardar operación</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Operaciones de venta</div>
+        <table class="data-table">
+          <thead><tr><th>Fecha</th><th>Propiedad</th><th>Precio cierre</th><th>Honor. total</th><th>Mi ingreso</th><th>Lead</th><th></th></tr></thead>
+          <tbody id="ventas-tabla"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ALQUILERES -->
+    <div class="tab-content" id="tab-alquileres">
+      <div class="metrics-grid">
+        <div class="metric"><div class="metric-label">Facturado alquileres ($)</div><div class="metric-value accent" id="al-facturado">$0</div></div>
+        <div class="metric"><div class="metric-label">Mi ingreso neto (USD)</div><div class="metric-value green" id="al-neto">USD 0</div></div>
+        <div class="metric"><div class="metric-label">Cuotas pendientes</div><div class="metric-value red" id="al-cuotas-pend">0</div></div>
+        <div class="metric"><div class="metric-label">Operaciones</div><div class="metric-value" id="al-ops">0</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Nueva operación de alquiler</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Propiedad</label>
+            <input type="text" class="form-input" id="al-propiedad" placeholder="Ej: D. Quiros 2412 5G">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Fecha</label>
+            <input type="date" class="form-input" id="al-fecha">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Moneda de cobro del honorario</label>
+          <select class="form-select" id="al-moneda-cobro">
+            <option value="ARS">Pesos ($ARS) — habitual</option>
+            <option value="USD">Dólares (USD)</option>
+          </select>
+        </div>
+        <div class="form-row-3">
+          <div class="form-group">
+            <label class="form-label">Tipo</label>
+            <select class="form-select" id="al-tipo">
+              <option>Alquiler</option>
+              <option>Renovación</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Monto alquiler ($)</label>
+            <input type="number" class="form-input" id="al-monto" placeholder="0">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Plazo (meses)</label>
+            <input type="number" class="form-input" id="al-plazo" placeholder="24" value="24">
+          </div>
+        </div>
+        <div class="form-row-3">
+          <div class="form-group">
+            <label class="form-label">% Honorario</label>
+            <input type="number" class="form-input" id="al-pct-honor" placeholder="5" value="5">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Cotización USD ($)</label>
+            <input type="number" class="form-input" id="al-cotiz" placeholder="Ej: 1500">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Cuotas de cobro</label>
+            <input type="number" class="form-input" id="al-cuotas" placeholder="1" value="1">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Fecha cobro primera cuota</label>
+          <input type="date" class="form-input" id="al-fecha-primera-cuota">
+          <div style="font-size:11px;color:#94a3b8;margin-top:4px">Las cuotas siguientes se calcularán mensualmente. Generalmente entre el 1 y 10 del mes siguiente.</div>
+        </div>
+
+        <div class="divider"></div>
+        <div class="card-title">Distribución</div>
+        <div class="form-row-3">
+          <div class="form-group">
+            <label class="form-label">MF %</label>
+            <input type="number" class="form-input" id="al-pct-mf" placeholder="100" value="100">
+          </div>
+          <div class="form-group">
+            <label class="form-label">La Inmo %</label>
+            <input type="number" class="form-input" id="al-pct-inmo" placeholder="0" value="0">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Colaborador %</label>
+            <input type="number" class="form-input" id="al-pct-colab" placeholder="0" value="0">
+          </div>
+        </div>
+        <div class="form-group" id="al-colab-nombre-group" style="display:none">
+          <label class="form-label">Nombre del colaborador</label>
+          <select class="form-select" id="al-colaborador-nombre">
+            <option value="">Sin colaborador</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">¿Facturado?</label>
+          <select class="form-select" id="al-facturado-check">
+            <option value="no">No facturado</option>
+            <option value="si">Facturado</option>
+          </select>
+        </div>
+
+        <div id="al-preview" style="background:var(--surface2);border-radius:var(--r-sm);padding:14px;margin:12px 0;display:none"> style="background:var(--surface2);border-radius:var(--r-sm);padding:14px;margin:12px 0;display:none">
           <div class="card-title" style="margin-bottom:10px">Resumen</div>
           <div class="form-row-3">
             <div><div class="metric-label">Honorario total</div><div style="font-size:18px;font-weight:500;color:var(--accent)" id="al-prev-total">USD 0</div></div>
@@ -1790,79 +1896,130 @@ window.toggleFacturado = async function(coleccion, id, current) {
 
 function renderAll() { renderDashboard(); renderGastos(); }
 
-function renderDashboard() {
-  const mes = getMesActual();
-  const gastosMes = gastos.filter(g => g.fecha && g.fecha.startsWith(mes));
-  const totalGastos = gastosMes.reduce((a,g) => a + (Number(g.monto)||0), 0);
-  const ahorrosMes = ahorros.filter(a => a.fecha && a.fecha.startsWith(mes));
-  const totalAhorro = ahorrosMes.reduce((a,x) => a + (Number(x.monto)||0), 0);
-  const totalPatUSD = activos.reduce((a,x) => a + (Number(x.valorActual)||0), 0);
-  const pendRecupero = recuperos.filter(r => !r.recuperado).reduce((a,r) => a+(Number(r.monto)||0), 0);
+function renderDashboard() { renderDashboardAnalitico(); }
 
-  document.getElementById('d-gastos').textContent = '$'+fmt(totalGastos);
-  document.getElementById('d-ahorro').textContent = '$'+fmt(totalAhorro);
-  document.getElementById('d-patrimonio').textContent = fmtUSD(totalPatUSD);
-  document.getElementById('d-recuperos').textContent = '$'+fmt(pendRecupero);
+window.renderDashboardAnalitico = function() {
+  const anio = new Date().getFullYear().toString();
+  const mesActual = getMesActual();
+  const sel = document.getElementById('dash-mes-sel');
+  const mesSel = sel ? sel.value || mesActual : mesActual;
 
-  // Presupuesto semanal
-  if (config.ingreso > 0) {
-    const ingreso = Number(config.ingreso);
-    const pctAhorro = Number(config.ahorro_pct || 40) / 100;
-    const montoAhorro = ingreso * pctAhorro;
-    const totalFijos = getTotalFijos();
-    const disponible = ingreso - montoAhorro - totalFijos;
-    const semanal = Math.max(disponible / 4.33, 0);
-    const gastadoSemana = gastosMes.filter(g => {
-      const d = new Date(g.fecha);
-      const now = new Date();
-      const diffDays = (now - d) / (1000*60*60*24);
-      return diffDays <= 7;
-    }).filter(g => !gastosFijos.some(f=>f.rubro===g.rubro)).reduce((a,g) => a+(Number(g.monto)||0), 0);
-    const pct = semanal > 0 ? Math.min((gastadoSemana / semanal) * 100, 100) : 0;
-    const fillClass = pct < 70 ? 'ok' : pct < 90 ? 'warn' : 'over';
-    document.getElementById('presupuesto-content').innerHTML = `
-      <div style="margin-bottom:8px">
-        <span style="font-size:22px;font-weight:500;color:var(--accent)">$${fmt(Math.round(semanal))}</span>
-        <span style="font-size:12px;color:var(--text3);margin-left:8px">por semana (variables)</span>
-      </div>
-      <div style="font-size:12px;color:var(--text3);margin-bottom:6px">Gastado en variables esta semana: $${fmt(Math.round(gastadoSemana))}</div>
-      <div class="budget-bar"><div class="budget-fill ${fillClass}" style="width:${pct}%"></div></div>
-      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-top:4px">
-        <span>${Math.round(pct)}% usado</span>
-        <span>Resto: $${fmt(Math.round(Math.max(semanal - gastadoSemana,0)))}</span>
-      </div>
-      <div style="font-size:11px;color:var(--text3);margin-top:6px">Fijos descontados: $${fmt(totalFijos)}/mes</div>
-    `;
-    document.getElementById('a-objetivo').textContent = '$'+fmt(Math.round(montoAhorro));
+  if(sel) {
+    const meses6 = [];
+    for(let i=5;i>=0;i--) {
+      const d = new Date(); d.setMonth(d.getMonth()-i);
+      const m = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+      meses6.push(m);
+    }
+    const current = sel.value;
+    sel.innerHTML = '<option value="">Este mes</option>' + meses6.map(m=>`<option value="${m}" ${m===current?'selected':''}>${m}</option>`).join('');
+  }
+  const sub = document.getElementById('dash-subtitle');
+  if(sub) sub.textContent = mesSel;
+
+  function getIngresosUSD(mes) {
+    const v = ventas.filter(x=>x.fechaCierre&&x.fechaCierre.startsWith(mes)).reduce((a,x)=>a+Number(x.honorarioTotal||0),0);
+    const al = alquileres_ops.filter(x=>x.fecha&&x.fecha.startsWith(mes)).reduce((a,x)=>a+Number(x.honorarioTotal||0),0);
+    const ap = adm_props.filter(x=>x.mes===mes).reduce((a,x)=>a+Number(x.montoUSD||0),0);
+    const ac = adm_cons_ops.filter(x=>x.mes===mes).reduce((a,x)=>a+Number(x.netoUSD||0),0);
+    const ot = otros_ingresos.filter(x=>x.fecha&&x.fecha.startsWith(mes)).reduce((a,x)=>a+(Number(x.montoUSD||0)||(cotizacion>0?Number(x.montoARS||0)/cotizacion:0)),0);
+    return {v,al,ap,ac,ot,total:v+al+ap+ac+ot};
+  }
+  function getCostosARS(mes) {
+    return costos.filter(c=>c.fecha&&c.fecha.startsWith(mes)).reduce((a,c)=>a+Number(c.monto||0),0);
+  }
+  function getMesPrev(mes,n) {
+    const [y,m] = mes.split('-').map(Number);
+    const d = new Date(y,m-1-n,1);
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+  }
+  const setEl = (id,val) => { const e=document.getElementById(id); if(e) e.innerHTML=val; };
+
+  const ingMes = getIngresosUSD(mesSel);
+  const ingMesAnt = getIngresosUSD(getMesPrev(mesSel,1));
+  const costosMes = getCostosARS(mesSel);
+  const costosMesAnt = getCostosARS(getMesPrev(mesSel,1));
+  const ahorrosMes = ahorros.filter(a=>a.fecha&&a.fecha.startsWith(mesSel)).reduce((s,a)=>s+Number(a.monto||0),0);
+  const ingConf = Number(config.ingreso||0);
+  const pctObj = Number(config.ahorro_pct||40);
+
+  const varIng = ingMesAnt.total>0?((ingMes.total-ingMesAnt.total)/ingMesAnt.total*100).toFixed(1):null;
+  const varCos = costosMesAnt>0?((costosMes-costosMesAnt)/costosMesAnt*100).toFixed(1):null;
+  const netoUSD = ingMes.total-(cotizacion>0?costosMes/cotizacion:0);
+  const pctAhorroReal = ingConf>0?(ahorrosMes/ingConf*100).toFixed(1):null;
+
+  setEl('kpi-ingresos','USD '+fmt(Math.round(ingMes.total)));
+  setEl('kpi-ingresos-var',varIng!==null?`<span style="color:${varIng>=0?'#059669':'#dc2626'}">${varIng>=0?'▲':'▼'} ${Math.abs(varIng)}% vs mes ant.</span>`:'<span style="color:#94a3b8">Sin datos anteriores</span>');
+  setEl('kpi-costos','$'+fmt(costosMes));
+  setEl('kpi-costos-var',varCos!==null?`<span style="color:${varCos<=0?'#059669':'#dc2626'}">${varCos<=0?'▼':'▲'} ${Math.abs(varCos)}% vs mes ant.</span>`:'<span style="color:#94a3b8">Sin datos anteriores</span>');
+  const netoEl=document.getElementById('kpi-neto');
+  if(netoEl){netoEl.textContent='USD '+fmt(Math.round(netoUSD));netoEl.style.color=netoUSD>=0?'#059669':'#dc2626';}
+  setEl('kpi-neto-sub','<span style="color:#94a3b8">Ingresos - costos (equiv. USD)</span>');
+  setEl('kpi-ahorro',pctAhorroReal!==null?pctAhorroReal+'%':'—');
+  setEl('kpi-ahorro-sub',`<span style="color:${pctAhorroReal>=pctObj?'#059669':'#dc2626'}">Objetivo: ${pctObj}%</span>`);
+
+  // GRÁFICO 6 MESES
+  const meses6=[];
+  for(let i=5;i>=0;i--){const d=new Date();d.setMonth(d.getMonth()-i);meses6.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'));}
+  const datos6=meses6.map(m=>({mes:m,...getIngresosUSD(m)}));
+  const maxVal=Math.max(...datos6.map(d=>d.total),1);
+  const chartEl=document.getElementById('chart-ingresos');
+  if(chartEl){
+    const colors={v:'#0891b2',al:'#8b5cf6',ap:'#06b6d4',ac:'#10b981',ot:'#f59e0b'};
+    const keys=['v','al','ap','ac','ot'];
+    chartEl.innerHTML=datos6.map(d=>{
+      const bar=keys.map(k=>`<div style="background:${colors[k]};height:${Math.round(d[k]/maxVal*175)}px;width:100%;min-height:${d[k]>0?2:0}px" title="USD ${fmt(Math.round(d[k]))}"></div>`).join('');
+      const label=d.mes.split('-')[1]+'/'+d.mes.split('-')[0].slice(2);
+      return `<div style="flex:1;display:flex;flex-direction:column;align-items:center">
+        <div style="font-size:9px;color:#94a3b8;margin-bottom:3px">${d.total>0?'USD '+fmt(Math.round(d.total)):''}</div>
+        <div style="display:flex;flex-direction:column-reverse;width:100%;gap:1px;height:175px">${bar}</div>
+        <div style="font-size:10px;color:#64748b;margin-top:5px">${label}</div>
+      </div>`;
+    }).join('');
   }
 
-  // Rubros dashboard
-  const rubros = {};
-  gastosMes.forEach(g => { rubros[g.rubro] = (rubros[g.rubro]||0) + Number(g.monto); });
-  const sorted = Object.entries(rubros).sort((a,b) => b[1]-a[1]).slice(0,6);
-  const maxVal = sorted[0]?.[1] || 1;
-  document.getElementById('dash-rubros').innerHTML = sorted.length ? sorted.map(([r,v]) => `
-    <div style="margin-bottom:10px">
-      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">
-        <span style="color:var(--text2)">${r}</span>
-        <span style="color:var(--text)">$${fmt(v)}</span>
-      </div>
-      <div class="budget-bar"><div class="budget-fill ok" style="width:${(v/maxVal)*100}%"></div></div>
-    </div>`).join('') : '<div style="color:var(--text3);font-size:13px">Sin gastos este mes</div>';
+  // SALDOS
+  const cuotasPend=cuotas_data.filter(c=>!c.cobrada).reduce((a,c)=>a+Number(c.monto||0),0);
+  const recuperosPend=recuperos.filter(r=>!r.recuperado).reduce((a,r)=>a+Number(r.monto||0),0);
+  const factSin=[...ventas,...alquileres_ops,...adm_props,...adm_cons_ops].filter(x=>!x.facturado).length;
+  setEl('sal-cuotas','USD '+fmt(Math.round(cuotasPend)));
+  setEl('sal-factsin',factSin+' ops sin facturar');
+  setEl('sal-recuperos','$'+fmt(recuperosPend));
+  setEl('sal-total','USD '+fmt(Math.round(cuotasPend+(cotizacion>0?recuperosPend/cotizacion:0))));
 
-  // Cierre de mes
-  renderCierre(totalGastos);
+  // PROYECCIÓN
+  const prom3=[1,2,3].reduce((a,i)=>a+getIngresosUSD(getMesPrev(mesSel,i)).total,0)/3;
+  const now=new Date();
+  const d30=new Date(now.getTime()+30*86400000);
+  const d60=new Date(now.getTime()+60*86400000);
+  const d90=new Date(now.getTime()+90*86400000);
+  const c30=cuotas_data.filter(c=>!c.cobrada&&c.fechaCobro&&new Date(c.fechaCobro)<=d30).reduce((a,c)=>a+Number(c.monto||0),0);
+  const c60=cuotas_data.filter(c=>!c.cobrada&&c.fechaCobro&&new Date(c.fechaCobro)<=d60).reduce((a,c)=>a+Number(c.monto||0),0);
+  const c90=cuotas_data.filter(c=>!c.cobrada&&c.fechaCobro&&new Date(c.fechaCobro)<=d90).reduce((a,c)=>a+Number(c.monto||0),0);
+  setEl('proy-30','USD '+fmt(Math.round(c30+prom3)));
+  setEl('proy-60','USD '+fmt(Math.round(c60+prom3*2)));
+  setEl('proy-90','USD '+fmt(Math.round(c90+prom3*3)));
+  setEl('proy-prom','USD '+fmt(Math.round(prom3)));
 
-  // Últimos gastos
-  const ultimos = gastos.slice(0,5);
-  document.getElementById('dash-ultimos-body').innerHTML = ultimos.length ? ultimos.map(g => `
-    <tr>
-      <td>${formatFecha(g.fecha)}</td>
-      <td><span class="badge badge-gray">${g.rubro}</span></td>
-      <td style="color:var(--text2)">${g.descripcion||''}</td>
-      <td style="color:var(--red);font-weight:500">$${fmt(g.monto)}</td>
-    </tr>`).join('') : '<tr><td colspan="4" class="empty">Sin gastos registrados</td></tr>';
+  // COSTOS POR ÁREA
+  const areasC=[{a:'ventas',l:'Ventas',col:'#0891b2'},{a:'alquileres',l:'Alquileres',col:'#8b5cf6'},{a:'adm-prop',l:'Adm. Prop.',col:'#06b6d4'},{a:'adm-cons',l:'Adm. Cons.',col:'#10b981'},{a:'generales',l:'Generales',col:'#f59e0b'}];
+  const costData=areasC.map(x=>({...x,v:costos.filter(c=>c.fecha&&c.fecha.startsWith(mesSel)&&c.area===x.a).reduce((s,c)=>s+Number(c.monto||0),0)})).filter(x=>x.v>0);
+  const maxC=Math.max(...costData.map(x=>x.v),1);
+  setEl('dash-costos-area',costData.length?costData.map(x=>`<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span style="color:#475569">${x.l}</span><span style="font-weight:500">$${fmt(x.v)}</span></div><div style="height:6px;background:#f1f5f9;border-radius:3px;overflow:hidden"><div style="height:100%;width:${x.v/maxC*100}%;background:${x.col};border-radius:3px"></div></div></div>`).join(''):'<div style="color:#94a3b8;font-size:13px;text-align:center;padding:20px">Sin costos este mes</div>');
+
+  // RATIO
+  const ratioData=[{l:'Ventas',i:ingMes.v,a:'ventas',col:'#0891b2'},{l:'Alquileres',i:ingMes.al,a:'alquileres',col:'#8b5cf6'},{l:'Adm. Prop.',i:ingMes.ap,a:'adm-prop',col:'#06b6d4'},{l:'Adm. Cons.',i:ingMes.ac,a:'adm-cons',col:'#10b981'}].map(x=>({...x,c:cotizacion>0?costos.filter(cd=>cd.fecha&&cd.fecha.startsWith(mesSel)&&cd.area===x.a).reduce((s,cd)=>s+Number(cd.monto||0),0)/cotizacion:0})).filter(x=>x.i>0||x.c>0);
+  setEl('dash-ratio-area',ratioData.length?ratioData.map(x=>{const m=x.i>0?((x.i-x.c)/x.i*100).toFixed(1):0;const col=m>=70?'#059669':m>=40?'#d97706':'#dc2626';return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f8fafc"><div style="display:flex;align-items:center;gap:8px"><span style="width:8px;height:8px;border-radius:50%;background:${x.col};display:inline-block"></span><span style="font-size:13px;color:#475569">${x.l}</span></div><div style="text-align:right"><div style="font-size:13px;font-weight:500;color:${col}">${m}% margen</div><div style="font-size:10px;color:#94a3b8">USD ${fmt(Math.round(x.i))} / USD ${fmt(Math.round(x.c))}</div></div></div>`;}).join(''):'<div style="color:#94a3b8;font-size:13px;text-align:center;padding:20px">Sin datos</div>');
+
+  // PATRIMONIO
+  const totalPat=activos.reduce((a,x)=>a+Number(x.valorActual||0),0);
+  const elPat=document.getElementById('dash-patrimonio-total');
+  if(elPat) elPat.textContent=fmtUSD(totalPat);
+  const tipoCol={'Dólares efectivo':'#d97706','Inmueble / Lote':'#0891b2','Fondo de inversión':'#8b5cf6','Otro':'#94a3b8'};
+  const patEl=document.getElementById('dash-patrimonio-detalle');
+  if(patEl) patEl.innerHTML=activos.length?activos.map(a=>`<div style="background:#f8fafc;border-radius:10px;padding:14px;border-left:3px solid ${tipoCol[a.tipo]||'#94a3b8'}"><div style="font-size:11px;color:#94a3b8;margin-bottom:3px">${a.tipo}</div><div style="font-size:13px;font-weight:500;color:#0f172a;margin-bottom:3px">${a.nombre}</div><div style="font-size:16px;font-weight:600;color:#d97706">${fmtUSD(Number(a.valorActual||0))}</div>${a.valorCompra?`<div style="font-size:10px;color:${Number(a.valorActual)>=Number(a.valorCompra)?'#059669':'#dc2626'};margin-top:2px">${((Number(a.valorActual)-Number(a.valorCompra))/Number(a.valorCompra)*100).toFixed(1)}% vs compra</div>`:''}</div>`).join(''):'<div style="color:#94a3b8;font-size:13px;grid-column:1/-1;text-align:center;padding:20px">Sin activos</div>';
 }
+
 
 window.guardarConfig = async function() {
   const ingreso = Number(document.getElementById('conf-ingreso').value);
