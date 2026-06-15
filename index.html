@@ -820,7 +820,7 @@ body { background:var(--bg); color:var(--text); font-family:var(--font); font-si
         </div>
         <div id="alq-ops-body">
         <table class="data-table">
-          <thead><tr><th>Fecha</th><th>Propiedad</th><th>Tipo</th><th>Facturado ($)</th><th>Cobrado (USD)</th><th>Pendiente (USD)</th><th></th></tr></thead>
+          <thead><tr><th>Fecha</th><th>Propiedad</th><th>Tipo</th><th>Facturado ($)</th><th>Cobrado ($)</th><th>Pendiente ($)</th><th></th></tr></thead>
           <tbody id="alquileres-tabla"></tbody>
         </table>
         </div>
@@ -1613,7 +1613,7 @@ window.guardarEdicion = async function() {
           monto: montoPorCuota,
           cobrada: false,
           fecha: op?.fecha || '',
-          fechaCobro,
+          fechaCobro, cotizacion: op?.cotizacion || 1,
           createdAt: new Date().toISOString()
         });
       }
@@ -2953,7 +2953,7 @@ window.guardarAlquiler = async function() {
     await addDoc(collection(db,"cuotas"), {
       opId: opRef.id, propiedad, cuotaNum: i, totalCuotas: cuotas,
       monto: porCuota, cobrada: false, fecha,
-      fechaCobro,
+      fechaCobro, cotizacion: cotiz,
       createdAt: new Date().toISOString()
     });
   }

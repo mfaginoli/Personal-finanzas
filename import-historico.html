@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Importar histórico - Personal Finanzas</title>
+<style>
+  body{font-family:system-ui,-apple-system,sans-serif;background:#0f172a;color:#e2e8f0;margin:0;padding:20px;}
+  h1{font-size:20px;} h2{font-size:16px;margin-top:28px;border-bottom:1px solid #334155;padding-bottom:6px;}
+  table{width:100%;border-collapse:collapse;font-size:12px;margin:10px 0;}
+  th,td{border:1px solid #334155;padding:5px 7px;text-align:left;}
+  th{background:#1e293b;}
+  tr.excluida{opacity:.4;text-decoration:line-through;}
+  .btn{background:#3b82f6;color:#fff;border:none;padding:10px 18px;border-radius:6px;font-size:14px;cursor:pointer;margin:6px 6px 6px 0;}
+  .btn:disabled{background:#475569;cursor:not-allowed;}
+  .btn.done{background:#16a34a;}
+  #login-wrap{max-width:320px;margin:60px auto;text-align:center;}
+  input{padding:8px;border-radius:6px;border:1px solid #334155;background:#1e293b;color:#fff;width:100%;margin:6px 0;box-sizing:border-box;}
+  #log{background:#1e293b;border-radius:6px;padding:10px;margin-top:14px;font-size:12px;max-height:300px;overflow:auto;white-space:pre-wrap;}
+  .note{color:#fbbf24;font-size:12px;}
+  #app{display:none;}
+</style>
+</head>
+<body>
+
+<div id="login-wrap">
+  <h1>Importar histórico</h1>
+  <input type="email" id="login-email" placeholder="Email">
+  <input type="password" id="login-pass" placeholder="Contraseña">
+  <button class="btn" onclick="doLogin()">Entrar</button>
+  <button class="btn" style="background:#475569" onclick="recuperarClave()">Olvidé mi contraseña</button>
+  <div id="login-error" style="color:#f87171"></div>
+  <div id="login-info" style="color:#4ade80;font-size:13px;margin-top:8px"></div>
+</div>
+
+<div id="app">
+  <h1>Importar histórico de Ventas y Alquileres (2025-2026)</h1>
+  <p class="note">Revisá los datos antes de importar. Las filas marcadas como "excluida" no se van a cargar (datos incompletos o pendientes de revisión).</p>
+
+  <h2 style="color:#fbbf24">🔧 Corrección de cuotas existentes (cotización + marcar cobradas vencidas)</h2>
+  <p class="note">Revisa TODAS las cuotas guardadas hasta ahora (manuales + importadas). Completa el campo "cotización" (tomado de la operación) cuando falta, y marca como "cobrada" toda cuota cuya fecha de cobro ya pasó y todavía estaba pendiente.</p>
+  <button class="btn" id="btn-preview-fix" onclick="previewFixCuotas()">1. Analizar cuotas</button>
+  <div id="fix-preview"></div>
+  <button class="btn" id="btn-fix-cuotas" onclick="fixCuotas()" disabled>2. Aplicar correcciones</button>
+
+  <h2>Ventas 2025 (5 operaciones completas)</h2>
+  <table id="tabla-ventas2025"></table>
+  <button class="btn" id="btn-ventas2025" onclick="importar('ventas2025')">Importar Ventas 2025</button>
+
+  <h2>Ventas adicionales (Senda Mz 13, Opera Plaza, Sierra Nueva, Senda Lote 4/5 Mz 16)</h2>
+  <p class="note">"Balcones del Chateau T6 3A" 2026 queda afuera (no se cerró todavía).</p>
+  <table id="tabla-ventas-extra"></table>
+  <button class="btn" id="btn-ventasExtra" onclick="importar('ventasExtra')">Importar ventas adicionales</button>
+
+  <h2>Alquileres 2025 (11 operaciones)</h2>
+  <p class="note">Se excluye la fila 12 (Ayacucho 139 5C) por datos incompletos en la planilla.</p>
+  <table id="tabla-alquileres2025"></table>
+  <button class="btn" id="btn-alquileres2025" onclick="importar('alquileres2025')">Importar Alquileres 2025</button>
+
+  <h2>Alquileres 2026 (15 operaciones)</h2>
+  <p class="note">Se excluye "D. del Campillo 1672 PH 5" porque el monto en la planilla es "1100/1200" (no es un número único, necesita revisión manual).</p>
+  <table id="tabla-alquileres2026"></table>
+  <button class="btn" id="btn-alquileres2026" onclick="importar('alquileres2026')">Importar Alquileres 2026</button>
+
+  <div id="log"></div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCWEnTY1_8NIYFtMcbS0PxT3g0vCh3mhHQ",
+  authDomain: "personal-finanzas-1a54b.firebaseapp.com",
+  projectId: "personal-finanzas-1a54b",
+  storageBucket: "personal-finanzas-1a54b.firebasestorage.app",
+  messagingSenderId: "471052567695",
+  appId: "1:471052567695:web:36ed388cc55d87c19e5cfa"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+window.doLogin = async function() {
+  const email = document.getElementById('login-email').value;
+  const pass = document.getElementById('login-pass').value;
+  try {
+    await signInWithEmailAndPassword(auth, email, pass);
+  } catch(e) {
+    document.getElementById('login-error').textContent = 'Email o contraseña incorrectos';
+  }
+}
+
+window.recuperarClave = async function() {
+  const email = document.getElementById('login-email').value;
+  const errorEl = document.getElementById('login-error');
+  const infoEl = document.getElementById('login-info');
+  errorEl.textContent = ''; infoEl.textContent = '';
+  if (!email) { errorEl.textContent = 'Escribí tu email arriba primero'; return; }
+  try {
+    await sendPasswordResetEmail(auth, email);
+    infoEl.textContent = 'Te enviamos un mail a ' + email + ' con un link para restablecer la contraseña.';
+  } catch(e) {
+    errorEl.textContent = 'No se pudo enviar el mail: ' + e.message;
+  }
+}
+
+onAuthStateChanged(auth, user => {
+  if (user) {
+    document.getElementById('login-wrap').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    render();
+  }
+});
+
+const fmt = n => Math.round(n).toLocaleString('es-AR');
+const log = msg => { document.getElementById('log').textContent += msg + '\n'; };
+
+// ================= VENTAS 2025 =================
+const ventas2025 = [
+  {
+    propiedad: "M. Garcia 1371 2B", tipoOp: "cv", tipoCliente: "Comprador - Vendedor",
+    fechaIngresoProp: "2025-01-06", fechaIngresoLead: "",
+    fechaReserva: "2025-02-13", fechaCierre: "2025-02-24", diasCierre: 11,
+    formaPago: "Contado", cotizacion: 1,
+    precioPublicacion: 27000, precioCierre: 26500, margen: -0.01852,
+    pctHonorario: 6, honorarioTotal: 1590,
+    pctMF: 75, miIngreso: 1192.5,
+    pctInmo: 25, honorInmo: 397.5,
+    pctColab: 0, honorColab: 0,
+    captador: "Matias", origenCaptacion: "Adm. / Ref", tipoCaptacion: "Exclusiva",
+    origenLead: "ZonaProp", manejoLead: "Matias",
+    facturado: false, liqInmo: false, liqInmoFecha: "", liqColab: false, liqColabFecha: ""
+  },
+  {
+    propiedad: "N. Carranza 3674", tipoOp: "v", tipoCliente: "Vendedor",
+    fechaIngresoProp: "2025-03-17", fechaIngresoLead: "",
+    fechaReserva: "2025-05-05", fechaCierre: "2025-05-26", diasCierre: 21,
+    formaPago: "Contado", cotizacion: 1,
+    precioPublicacion: 160000, precioCierre: 155000, margen: -0.03125,
+    pctHonorario: 3, honorarioTotal: 4650,
+    pctMF: 75, miIngreso: 3487.5,
+    pctInmo: 25, honorInmo: 1162.5,
+    pctColab: 0, honorColab: 0,
+    captador: "Matias", origenCaptacion: "Amigo", tipoCaptacion: "Exclusiva",
+    origenLead: "Selecta", manejoLead: "Selecta",
+    facturado: false, liqInmo: false, liqInmoFecha: "", liqColab: false, liqColabFecha: ""
+  },
+  {
+    propiedad: "Bedoya 927 3 12", tipoOp: "c", tipoCliente: "Comprador",
+    fechaIngresoProp: "2025-03-11", fechaIngresoLead: "",
+    fechaReserva: "", fechaCierre: "2025-06-26", diasCierre: 0,
+    formaPago: "Contado", cotizacion: 1,
+    precioPublicacion: 63000, precioCierre: 57000, margen: -0.09524,
+    pctHonorario: 2.63, honorarioTotal: 1499.10,
+    pctMF: 75, miIngreso: 1124.33,
+    pctInmo: 25, honorInmo: 374.78,
+    pctColab: 0, honorColab: 0,
+    captador: "Gambero", origenCaptacion: "Colega", tipoCaptacion: "Referido",
+    origenLead: "Matias", manejoLead: "",
+    facturado: false, liqInmo: false, liqInmoFecha: "", liqColab: false, liqColabFecha: ""
+  },
+  {
+    propiedad: "R. Poincare 7637", tipoOp: "v", tipoCliente: "Vendedor",
+    fechaIngresoProp: "2025-06-10", fechaIngresoLead: "",
+    fechaReserva: "2025-07-10", fechaCierre: "2025-09-03", diasCierre: 55,
+    formaPago: "Crédito", cotizacion: 1,
+    precioPublicacion: 170000, precioCierre: 170000, margen: 0,
+    pctHonorario: 3, honorarioTotal: 5100,
+    pctMF: 75, miIngreso: 3825,
+    pctInmo: 25, honorInmo: 1275,
+    pctColab: 0, honorColab: 0,
+    captador: "Matias", origenCaptacion: "Amigo", tipoCaptacion: "Exclusiva",
+    origenLead: "Majo", manejoLead: "Vane",
+    facturado: false, liqInmo: false, liqInmoFecha: "", liqColab: false, liqColabFecha: ""
+  },
+  {
+    propiedad: "Fangio", tipoOp: "c", tipoCliente: "Comprador",
+    fechaIngresoProp: "", fechaIngresoLead: "",
+    fechaReserva: "", fechaCierre: "2025-09-04", diasCierre: 0,
+    formaPago: "Contado", cotizacion: 1,
+    precioPublicacion: 45000, precioCierre: 35000, margen: -0.22222,
+    pctHonorario: 3.72, honorarioTotal: 1300.25,
+    pctMF: 75, miIngreso: 975.19,
+    pctInmo: 25, honorInmo: 325.06,
+    pctColab: 0, honorColab: 0,
+    captador: "INMDago", origenCaptacion: "Cliente", tipoCaptacion: "ZonaProp",
+    origenLead: "Matias", manejoLead: "",
+    facturado: false, liqInmo: false, liqInmoFecha: "", liqColab: false, liqColabFecha: ""
+  }
+];
+
+// ================= VENTAS ADICIONALES (revisadas con el usuario) =================
+const ventasExtra = [
+  {
+    propiedad: "Senda 18 - 13", tipoOp: "c", tipoCliente: "Comprador",
+    fechaIngresoProp: "", fechaIngresoLead: "",
+    fechaReserva: "", fechaCierre: "2025-10-18", diasCierre: 0,
+    formaPago: "Contado", cotizacion: 1,
+    precioPublicacion: 54300, precioCierre: 54300, margen: 0,
+    pctHonorario: 3.25, honorarioTotal: 1764.75,
+    pctMF: 75, miIngreso: 1323.56,
+    pctInmo: 25, honorInmo: 441.19,
+    pctColab: 0, honorColab: 0,
+    captador: "LaInmo", origenCaptacion: "LaInmo", tipoCaptacion: "Amigo",
+    origenLead: "Matias", manejoLead: "",
+    facturado: false, liqInmo: false, liqInmoFecha: "", liqColab: false, liqColabFecha: ""
+  },
+  {
+    propiedad: "Senda 23 - 13", tipoOp: "c", tipoCliente: "Comprador",
+    fechaIngresoProp: "", fechaIngresoLead: "",
+    fechaReserva: "", fechaCierre: "2025-10-18", diasCierre: 0,
+    formaPago: "Contado", cotizacion: 1,
+    precioPublicacion: 54300, precioCierre: 54300, margen: 0,
+    pctHonorario: 3.25, honorarioTotal: 1764.75,
+    pctMF: 75, miIngreso: 1323.56,
+    pctInmo: 25, honorInmo: 441.19,
+    pctColab: 0, honorColab: 0,
+    captador: "LaInmo", origenCaptacion: "LaInmo", tipoCaptacion: "Amigo",
+    origenLead: "Matias", manejoLead: "",
+    facturado: false, liqInmo: false, liqInmoFecha: "", liqColab: false, liqColabFecha: ""
+  },
+  {
+    propiedad: "Senda 24 - 13", tipoOp: "c", tipoCliente: "Comprador",
+    fechaIngresoProp: "", fechaIngresoLead: "",
+    fechaReserva: "", fechaCierre: "2025-10-18", diasCierre: 0,
+    formaPago: "Contado", cotizacion: 1,
+    precioPublicacion: 54300, precioCierre: 54300, margen: 0,
+    pctHonorario: 3.25, honorarioTotal: 1764.75,
+    pctMF: 75, miIngreso: 1323.56,
+    pctInmo: 25, honorInmo: 441.19,
+    pctColab: 0, honorColab: 0,
+    captador: "LaInmo", origenCaptacion: "LaInmo", tipoCaptacion: "Yo",
+    origenLead: "Matias", manejoLead: "",
+    facturado: false, liqInmo: false, liqInmoFecha: "", liqColab: false, liqColabFecha: ""
+  },
+  {
+    propiedad: "Senda 25 - 13", tipoOp: "c", tipoCliente: "Comprador",
+    fechaIngresoProp: "", fechaIngresoLead: "",
+    fechaReserva: "", fechaCierre: "2025-10-18", diasCierre: 0,
+    formaPago: "Contado", cotizacion: 1,
+    precioPublicacion: 54300, precioCierre: 54300, margen: 0,
+    pctHonorario: 3.25, honorarioTotal: 1764.75,
+    pctMF: 75, miIngreso: 1323.56,
+    pctInmo: 25, honorInmo: 441.19,
+    pctColab: 0, honorColab: 0,
+    captador: "LaInmo", origenCaptacion: "LaInmo", tipoCaptacion: "Amigo",
+    origenLead: "Matias", manejoLead: "",
+    facturado: false, liqInmo: false, liqInmoFecha: "", liqColab: false, liqColabFecha: ""
+  },
+  {
+    propiedad: "Opera Plaza", tipoOp: "c", tipoCliente: "Comprador",
+    fechaIngresoProp: "", fechaIngresoLead: "",
+    fechaReserva: "", fechaCierre: "2025-10-18", diasCierre: 0,
+    formaPago: "Contado", cotizacion: 1,
+    precioPublicacion: 80000, precioCierre: 15753, margen: -0.8031,
+    pctHonorario: 3.5, honorarioTotal: 551.36,
+    pctMF: 75, miIngreso: 413.52,
+    pctInmo: 25, honorInmo: 137.84,
+    pctColab: 0, honorColab: 0,
+    captador: "", origenCaptacion: "", tipoCaptacion: "",
+    origenLead: "", manejoLead: "",
+    facturado: false, liqInmo: false, liqInmoFecha: "", liqColab: false, liqColabFecha: ""
+  },
+  {
+    propiedad: "Sierra Nueva", tipoOp: "v", tipoCliente: "Vendedor",
+    fechaIngresoProp: "", fechaIngresoLead: "",
+    fechaReserva: "", fechaCierre: "2025-09-29", diasCierre: 0,
+    formaPago: "Contado", cotizacion: 1,
+    precioPublicacion: 80000, precioCierre: 80000, margen: 0,
+    pctHonorario: 6, honorarioTotal: 4800,
+    pctMF: 75, miIngreso: 3600,
+    pctInmo: 25, honorInmo: 1200,
+    pctColab: 0, honorColab: 0,
+    captador: "Matias Faginoli", origenCaptacion: "", tipoCaptacion: "",
+    origenLead: "", manejoLead: "",
+    facturado: false, liqInmo: false, liqInmoFecha: "", liqColab: false, liqColabFecha: ""
+  },
+  {
+    propiedad: "Senda Lote 4 Mz 16", tipoOp: "c", tipoCliente: "Comprador",
+    fechaIngresoProp: "", fechaIngresoLead: "",
+    fechaReserva: "", fechaCierre: "2026-02-01", diasCierre: 0,
+    formaPago: "Financiación propia", cotizacion: 1,
+    precioPublicacion: 61000, precioCierre: 61847, margen: 0.0139,
+    pctHonorario: 3.5, honorarioTotal: 2164.65,
+    pctMF: 75, miIngreso: 1623.48,
+    pctInmo: 25, honorInmo: 541.16,
+    pctColab: 0, honorColab: 0,
+    captador: "LaInmo", origenCaptacion: "", tipoCaptacion: "",
+    origenLead: "Referido", manejoLead: "MF",
+    facturado: false, liqInmo: false, liqInmoFecha: "", liqColab: false, liqColabFecha: ""
+  },
+  {
+    propiedad: "Senda Lote 5 Mz 16", tipoOp: "c", tipoCliente: "Comprador",
+    fechaIngresoProp: "", fechaIngresoLead: "",
+    fechaReserva: "", fechaCierre: "2026-02-01", diasCierre: 0,
+    formaPago: "Financiación propia", cotizacion: 1,
+    precioPublicacion: 61000, precioCierre: 61847, margen: 0.0139,
+    pctHonorario: 3.5, honorarioTotal: 2164.65,
+    pctMF: 75, miIngreso: 1623.48,
+    pctInmo: 25, honorInmo: 541.16,
+    pctColab: 0, honorColab: 0,
+    captador: "LaInmo", origenCaptacion: "", tipoCaptacion: "",
+    origenLead: "Referido", manejoLead: "MF",
+    facturado: false, liqInmo: false, liqInmoFecha: "", liqColab: false, liqColabFecha: ""
+  }
+];
+
+// ================= ALQUILERES 2025 =================
+const alquileres2025 = [
+  { fecha:"2025-01-10", propiedad:"D. Quiros 2412 5G", tipo:"RENOVACION", monto:300000, plazo:24, cuotas:1, pctHonorario:5, cotizacion:1190, pctMF:100, pctInmo:0, pctColab:0, facturado:false },
+  { fecha:"2025-02-10", propiedad:"R. del Busto 2989", tipo:"RENOVACION", monto:650000, plazo:24, cuotas:2, pctHonorario:5, cotizacion:1190, pctMF:100, pctInmo:0, pctColab:0, facturado:false },
+  { fecha:"2025-04-01", propiedad:"I. La Catolica", tipo:"ALQUILER", monto:300000, plazo:24, cuotas:1, pctHonorario:5, cotizacion:1290, pctMF:100, pctInmo:0, pctColab:0, facturado:false },
+  { fecha:"2025-04-01", propiedad:"Cnel. Olmedo 4D", tipo:"RENOVACION", monto:295000, plazo:24, cuotas:1, pctHonorario:5, cotizacion:1250, pctMF:100, pctInmo:0, pctColab:0, facturado:false },
+  { fecha:"2025-06-01", propiedad:"Sol de Mayo 3B", tipo:"RENOVACION", monto:630000, plazo:24, cuotas:1, pctHonorario:5, cotizacion:1150, pctMF:100, pctInmo:0, pctColab:0, facturado:false },
+  { fecha:"2025-08-01", propiedad:"M. Moreno 157", tipo:"ALQUILER", monto:270000, plazo:24, cuotas:1, pctHonorario:5, cotizacion:1300, pctMF:100, pctInmo:0, pctColab:10, facturado:true },
+  { fecha:"2025-08-01", propiedad:"Ayacucho 2 D139", tipo:"ALQUILER", monto:280000, plazo:24, cuotas:1, pctHonorario:5, cotizacion:1300, pctMF:100, pctInmo:0, pctColab:10, facturado:true },
+  { fecha:"2025-08-01", propiedad:"J. Arguello", tipo:"ALQUILER", monto:900000, plazo:24, cuotas:2, pctHonorario:5, cotizacion:1300, pctMF:100, pctInmo:0, pctColab:0, facturado:false },
+  { fecha:"2025-10-29", propiedad:"Pje. San Agustin", tipo:"ALQUILER", monto:350000, plazo:24, cuotas:1, pctHonorario:5, cotizacion:1450, pctMF:100, pctInmo:0, pctColab:10, facturado:false },
+  { fecha:"2025-11-05", propiedad:"D. Quiros 271", tipo:"RENOVACION", monto:370000, plazo:12, cuotas:1, pctHonorario:5, cotizacion:1430, pctMF:100, pctInmo:0, pctColab:0, facturado:false },
+  { fecha:"2025-11-13", propiedad:"Opera 1311", tipo:"ALQUILER", monto:600000, plazo:24, cuotas:1, pctHonorario:5, cotizacion:1430, pctMF:65, pctInmo:0, pctColab:35, facturado:false }
+];
+
+// ================= ALQUILERES 2026 =================
+const alquileres2026 = [
+  { fecha:"2026-01-09", propiedad:"T. Malbran 3733", tipo:"RENOVACION", monto:1900000, plazo:24, cuotas:3, pctHonorario:5, cotizacion:1500, pctMF:100, pctInmo:0, pctColab:0, facturado:true },
+  { fecha:"2026-02-01", propiedad:"Housing de Miradores Casa 34", tipo:"ALQUILER", monto:1100000, plazo:24, cuotas:2, pctHonorario:5, cotizacion:1470, pctMF:100, pctInmo:0, pctColab:0, facturado:false },
+  { fecha:"2026-02-10", propiedad:"MICA", tipo:"ALQUILER", monto:850000, plazo:24, cuotas:1, pctHonorario:5, cotizacion:1470, pctMF:33.33, pctInmo:33.33, pctColab:33.33, facturado:false },
+  { fecha:"2026-03-10", propiedad:"Caseros 835 PBD", tipo:"RENOVACION", monto:600000, plazo:24, cuotas:1, pctHonorario:5, cotizacion:1415, pctMF:100, pctInmo:0, pctColab:0, facturado:false },
+  { fecha:"2026-03-10", propiedad:"MICA SAN IGNACIO", tipo:"ALQUILER", monto:1300000, plazo:24, cuotas:1, pctHonorario:5, cotizacion:1415, pctMF:50, pctInmo:0, pctColab:50, facturado:false },
+  { fecha:"2026-04-01", propiedad:"Balcarce 369 3A", tipo:"ALQUILER", monto:480000, plazo:24, cuotas:1, pctHonorario:5, cotizacion:1360, pctMF:100, pctInmo:0, pctColab:0, facturado:false },
+  { fecha:"2026-04-01", propiedad:"Andalucia 2258", tipo:"RENOVACION", monto:530000, plazo:24, cuotas:3, pctHonorario:5, cotizacion:1400, pctMF:100, pctInmo:0, pctColab:0, facturado:false },
+  { fecha:"2026-05-01", propiedad:"Calle 13 4643", tipo:"ALQUILER", monto:670000, plazo:24, cuotas:2, pctHonorario:5, cotizacion:1390, pctMF:100, pctInmo:0, pctColab:0, facturado:true },
+  { fecha:"2026-05-01", propiedad:"L. Tedin 4015", tipo:"ALQUILER", monto:550000, plazo:24, cuotas:1, pctHonorario:5, cotizacion:1390, pctMF:100, pctInmo:0, pctColab:0, facturado:true },
+  { fecha:"2026-05-10", propiedad:"M. P. Cabrera", tipo:"ALQUILER", monto:2600000, plazo:60, cuotas:6, pctHonorario:5, cotizacion:1400, pctMF:100, pctInmo:0, pctColab:0, facturado:false },
+  { fecha:"2026-05-14", propiedad:"La Plata 700", tipo:"ALQUILER", monto:750000, plazo:24, cuotas:2, pctHonorario:5, cotizacion:1400, pctMF:50, pctInmo:50, pctColab:0, facturado:false },
+  { fecha:"2026-05-21", propiedad:"Ov. Lagos 44 7F", tipo:"ALQUILER", monto:675000, plazo:24, cuotas:1, pctHonorario:5, cotizacion:1440, pctMF:100, pctInmo:0, pctColab:0, facturado:true },
+  { fecha:"2026-05-25", propiedad:"Berzelius", tipo:"ALQUILER", monto:1450000, plazo:24, cuotas:2, pctHonorario:5, cotizacion:1440, pctMF:100, pctInmo:0, pctColab:0, facturado:false },
+  { fecha:"2026-05-27", propiedad:"Alto V. Sol - Tronador 6E", tipo:"ALQUILER", monto:730000, plazo:24, cuotas:1, pctHonorario:5, cotizacion:1440, pctMF:100, pctInmo:0, pctColab:0, facturado:true },
+  { fecha:"2026-06-01", propiedad:"Colon 2861 5A", tipo:"ALQUILER", monto:480000, plazo:24, cuotas:2, pctHonorario:5, cotizacion:1400, pctMF:100, pctInmo:0, pctColab:0, facturado:false }
+];
+
+// completa cálculos de alquileres
+function calcAlquiler(r) {
+  const importeOp = r.monto * r.plazo;
+  const honorarioTotal = importeOp * (r.pctHonorario/100) / r.cotizacion;
+  const miIngreso = honorarioTotal * (r.pctMF/100);
+  const porCuota = miIngreso / r.cuotas;
+  return { ...r, importeOp, honorarioTotal, miIngreso, porCuota,
+    montoInmo: Math.round(honorarioTotal*(r.pctInmo/100)),
+    montoColab: Math.round(honorarioTotal*(r.pctColab/100)) };
+}
+
+function render() {
+  const tv = document.getElementById('tabla-ventas2025');
+  tv.innerHTML = '<tr><th>Propiedad</th><th>Tipo</th><th>F. Cierre</th><th>Precio cierre</th><th>% Honor</th><th>Honor. total</th><th>Mi ingreso</th><th>Captador</th></tr>' +
+    ventas2025.map(v => `<tr><td>${v.propiedad}</td><td>${v.tipoCliente}</td><td>${v.fechaCierre}</td><td>USD ${fmt(v.precioCierre)}</td><td>${v.pctHonorario}%</td><td>USD ${fmt(v.honorarioTotal)}</td><td>USD ${fmt(v.miIngreso)}</td><td>${v.captador}</td></tr>`).join('');
+
+  const tve = document.getElementById('tabla-ventas-extra');
+  tve.innerHTML = '<tr><th>Propiedad</th><th>Tipo</th><th>F. Cierre</th><th>Precio cierre</th><th>% Honor</th><th>Honor. total</th><th>Mi ingreso</th><th>Captador</th></tr>' +
+    ventasExtra.map(v => `<tr><td>${v.propiedad}</td><td>${v.tipoCliente}</td><td>${v.fechaCierre}</td><td>USD ${fmt(v.precioCierre)}</td><td>${v.pctHonorario}%</td><td>USD ${fmt(v.honorarioTotal)}</td><td>USD ${fmt(v.miIngreso)}</td><td>${v.captador}</td></tr>`).join('');
+
+  const ta25 = document.getElementById('tabla-alquileres2025');
+  const a25 = alquileres2025.map(calcAlquiler);
+  ta25.innerHTML = '<tr><th>Fecha</th><th>Propiedad</th><th>Tipo</th><th>Monto/mes</th><th>Plazo</th><th>Cuotas</th><th>Honor. total (USD)</th><th>Mi ingreso (USD)</th><th>Por cuota (USD)</th></tr>' +
+    a25.map(r => `<tr><td>${r.fecha}</td><td>${r.propiedad}</td><td>${r.tipo}</td><td>$${fmt(r.monto)}</td><td>${r.plazo}</td><td>${r.cuotas}</td><td>USD ${fmt(r.honorarioTotal)}</td><td>USD ${fmt(r.miIngreso)}</td><td>USD ${fmt(r.porCuota)}</td></tr>`).join('');
+
+  const ta26 = document.getElementById('tabla-alquileres2026');
+  const a26 = alquileres2026.map(calcAlquiler);
+  ta26.innerHTML = '<tr><th>Fecha</th><th>Propiedad</th><th>Tipo</th><th>Monto/mes</th><th>Plazo</th><th>Cuotas</th><th>Honor. total (USD)</th><th>Mi ingreso (USD)</th><th>Por cuota (USD)</th></tr>' +
+    a26.map(r => `<tr><td>${r.fecha}</td><td>${r.propiedad}</td><td>${r.tipo}</td><td>$${fmt(r.monto)}</td><td>${r.plazo}</td><td>${r.cuotas}</td><td>USD ${fmt(r.honorarioTotal)}</td><td>USD ${fmt(r.miIngreso)}</td><td>USD ${fmt(r.porCuota)}</td></tr>`).join('');
+}
+
+const today = new Date(); today.setHours(0,0,0,0);
+
+async function guardarAlquilerHistorico(r) {
+  const calc = calcAlquiler(r);
+  const opRef = await addDoc(collection(db,"alquileres_ops"), {
+    propiedad: r.propiedad, fecha: r.fecha, tipo: r.tipo,
+    monto: r.monto, plazo: r.plazo, importeOp: calc.importeOp,
+    pctHonorario: r.pctHonorario, cotizacion: r.cotizacion,
+    honorarioTotal: calc.honorarioTotal, pctMF: r.pctMF, miIngreso: calc.miIngreso,
+    pctInmo: r.pctInmo, pctColab: r.pctColab,
+    colaboradorNombre: '',
+    montoInmo: calc.montoInmo, montoColab: calc.montoColab,
+    cuotas: r.cuotas, porCuota: calc.porCuota, facturado: r.facturado,
+    createdAt: new Date().toISOString()
+  });
+
+  // primera cuota: día 5 del mes siguiente a la fecha de la operación
+  const fechaPrimeraCuota = new Date(r.fecha);
+  fechaPrimeraCuota.setMonth(fechaPrimeraCuota.getMonth()+1);
+  fechaPrimeraCuota.setDate(5);
+
+  for (let i=1; i<=r.cuotas; i++) {
+    const fechaCuota = new Date(fechaPrimeraCuota);
+    fechaCuota.setMonth(fechaCuota.getMonth() + (i-1));
+    const fechaCobro = fechaCuota.toISOString().split('T')[0];
+    const cobrada = fechaCuota <= today;
+    await addDoc(collection(db,"cuotas"), {
+      opId: opRef.id, propiedad: r.propiedad, cuotaNum: i, totalCuotas: r.cuotas,
+      monto: calc.porCuota, cobrada, fecha: r.fecha, fechaCobro,
+      createdAt: new Date().toISOString()
+    });
+  }
+}
+
+async function guardarVentaHistorica(v) {
+  await addDoc(collection(db,"ventas"), {
+    propiedad: v.propiedad, fechaCierre: v.fechaCierre,
+    tipoCliente: v.tipoCliente, formaPago: v.formaPago, cotizacion: v.cotizacion,
+    precioPublicacion: v.precioPublicacion, precioCierre: v.precioCierre,
+    pctHonorario: v.pctHonorario, honorarioTotal: v.honorarioTotal,
+    pctMF: v.pctMF, miIngreso: v.miIngreso,
+    pctInmo: v.pctInmo, honorInmo: v.honorInmo,
+    pctColab: v.pctColab, honorColab: v.honorColab,
+    captador: v.captador, origenCaptacion: v.origenCaptacion, tipoCaptacion: v.tipoCaptacion,
+    manejoLead: v.manejoLead, origenLead: v.origenLead,
+    margen: v.margen, diasCierre: v.diasCierre,
+    facturado: v.facturado, tipoOp: v.tipoOp,
+    fechaIngresoProp: v.fechaIngresoProp, fechaIngresoLead: v.fechaIngresoLead,
+    liqInmo: v.liqInmo, liqInmoFecha: v.liqInmoFecha,
+    liqColab: v.liqColab, liqColabFecha: v.liqColabFecha,
+    createdAt: new Date().toISOString()
+  });
+}
+
+// ================= BACKFILL CUOTAS =================
+let cambiosCuotas = [];
+
+window.previewFixCuotas = async function() {
+  const btn = document.getElementById('btn-preview-fix');
+  btn.disabled = true;
+  btn.textContent = 'Analizando...';
+  try {
+    const opsSnap = await getDocs(collection(db,"alquileres_ops"));
+    const ops = {};
+    opsSnap.forEach(d => ops[d.id] = d.data());
+
+    const cuotasSnap = await getDocs(collection(db,"cuotas"));
+    cambiosCuotas = [];
+    cuotasSnap.forEach(d => {
+      const c = d.data();
+      const op = ops[c.opId];
+      const cambios = {};
+      if ((c.cotizacion === undefined || c.cotizacion === null) && op && op.cotizacion) {
+        cambios.cotizacion = op.cotizacion;
+      }
+      if (!c.cobrada && c.fechaCobro && c.fechaCobro <= today.toISOString().split('T')[0]) {
+        cambios.cobrada = true;
+        cambios.fechaCobrada = c.fechaCobro;
+      }
+      if (Object.keys(cambios).length > 0) {
+        cambiosCuotas.push({ id: d.id, c, op, cambios });
+      }
+    });
+
+    const div = document.getElementById('fix-preview');
+    if (cambiosCuotas.length === 0) {
+      div.innerHTML = '<p class="note">No hay cuotas para corregir. Todo OK.</p>';
+    } else {
+      div.innerHTML = '<table><tr><th>Propiedad</th><th>Cuota</th><th>Fecha cobro</th><th>Cobrada actual</th><th>Cambios</th></tr>' +
+        cambiosCuotas.map(x => `<tr><td>${x.c.propiedad||''}</td><td>${x.c.cuotaNum}/${x.c.totalCuotas}</td><td>${x.c.fechaCobro||''}</td><td>${x.c.cobrada?'Sí':'No'}</td><td>${
+          Object.entries(x.cambios).map(([k,v]) => `${k} → ${v}`).join(', ')
+        }</td></tr>`).join('') + '</table>' +
+        `<p class="note">${cambiosCuotas.length} cuota(s) a corregir.</p>`;
+    }
+    document.getElementById('btn-fix-cuotas').disabled = cambiosCuotas.length === 0;
+    btn.textContent = '1. Analizar cuotas';
+    btn.disabled = false;
+  } catch(e) {
+    log('ERROR analizando cuotas: '+e.message);
+    btn.textContent = '1. Analizar cuotas';
+    btn.disabled = false;
+  }
+}
+
+window.fixCuotas = async function() {
+  const btn = document.getElementById('btn-fix-cuotas');
+  btn.disabled = true;
+  btn.textContent = 'Aplicando...';
+  try {
+    for (const x of cambiosCuotas) {
+      await updateDoc(doc(db,"cuotas",x.id), x.cambios);
+      log('Cuota corregida: '+(x.c.propiedad||'')+' '+x.c.cuotaNum+'/'+x.c.totalCuotas+' -> '+JSON.stringify(x.cambios));
+    }
+    log('--- Corrección de cuotas completada ('+cambiosCuotas.length+') ---');
+    btn.textContent = '✓ Corregido';
+    btn.classList.add('done');
+  } catch(e) {
+    log('ERROR aplicando correcciones: '+e.message);
+    btn.disabled = false;
+    btn.textContent = 'Reintentar corrección';
+  }
+}
+
+window.importar = async function(grupo) {
+  const btn = document.getElementById('btn-'+grupo);
+  btn.disabled = true;
+  btn.textContent = 'Importando...';
+  try {
+    if (grupo === 'ventas2025') {
+      for (const v of ventas2025) { await guardarVentaHistorica(v); log('Venta importada: '+v.propiedad); }
+    } else if (grupo === 'ventasExtra') {
+      for (const v of ventasExtra) { await guardarVentaHistorica(v); log('Venta importada: '+v.propiedad+' ('+v.fechaCierre+')'); }
+    } else if (grupo === 'alquileres2025') {
+      for (const r of alquileres2025) { await guardarAlquilerHistorico(r); log('Alquiler importado: '+r.propiedad+' ('+r.fecha+')'); }
+    } else if (grupo === 'alquileres2026') {
+      for (const r of alquileres2026) { await guardarAlquilerHistorico(r); log('Alquiler importado: '+r.propiedad+' ('+r.fecha+')'); }
+    }
+    btn.textContent = '✓ Importado';
+    btn.classList.add('done');
+    log('--- '+grupo+' completado ---');
+  } catch(e) {
+    log('ERROR: '+e.message);
+    btn.disabled = false;
+    btn.textContent = 'Reintentar '+grupo;
+  }
+}
+</script>
+</body>
+</html>
