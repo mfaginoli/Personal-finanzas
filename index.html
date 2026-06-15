@@ -463,20 +463,30 @@ body { background:var(--bg); color:var(--text); font-family:var(--font); font-si
       <div style="font-size:32px;font-weight:600;color:var(--green);margin:8px 0" id="pres-semanal">$0</div>
       <div style="font-size:13px;color:var(--text2)">Después de ahorro y gastos fijos</div>
     </div>
-    <div class="card">
-      <div class="card-title">Gastos fijos mensuales</div>
-      <div id="pres-fijos-lista" style="margin-bottom:12px"></div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Concepto</label>
-          <input type="text" class="form-input" id="fijo-concepto" placeholder="Ej: Expensas">
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-title">Distribución del ingreso</div>
+      <div id="pres-resumen"></div>
+    </div>
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title">Gastos fijos mensuales</div>
+        <div id="pres-fijos-lista" style="margin-bottom:12px"></div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Concepto</label>
+            <input type="text" class="form-input" id="fijo-concepto" placeholder="Ej: Expensas">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Monto ($)</label>
+            <input type="number" class="form-input" id="fijo-monto" placeholder="0">
+          </div>
         </div>
-        <div class="form-group">
-          <label class="form-label">Monto ($)</label>
-          <input type="number" class="form-input" id="fijo-monto" placeholder="0">
-        </div>
+        <button class="btn btn-primary" onclick="agregarFijo()">Agregar gasto fijo</button>
       </div>
-      <button class="btn btn-primary" onclick="agregarFijo()">Agregar gasto fijo</button>
+      <div class="card">
+        <div class="card-title">Seguimiento semanal</div>
+        <div id="pres-semanal-detalle"></div>
+      </div>
     </div>
   </div>
 
@@ -2612,7 +2622,7 @@ async function saveGastosFijos() {
 }
 
 window.agregarFijo = async function() {
-  const rubro = document.getElementById('fijo-rubro').value;
+  const rubro = document.getElementById('fijo-concepto').value;
   const monto = Number(document.getElementById('fijo-monto').value);
   if(!monto) { alert('Ingresá un monto'); return; }
   gastosFijos.push({ rubro, monto, id: Date.now().toString() });
@@ -2640,10 +2650,11 @@ function renderPresupuesto() {
   document.getElementById('pres-ingreso').textContent = '$'+fmt(ingreso);
   document.getElementById('pres-ahorro').textContent = '$'+fmt(Math.round(montoAhorro));
   document.getElementById('pres-fijos').textContent = '$'+fmt(totalFijos);
+  document.getElementById('pres-disponible').textContent = '$'+fmt(Math.round(Math.max(disponibleVariables,0)));
   document.getElementById('pres-semanal').textContent = '$'+fmt(Math.round(Math.max(semanal,0)));
 
   // Lista de fijos
-  document.getElementById('fijos-lista').innerHTML = gastosFijos.length ? gastosFijos.map(f => `
+  document.getElementById('pres-fijos-lista').innerHTML = gastosFijos.length ? gastosFijos.map(f => `
     <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--surface2);border-radius:var(--r-sm)">
       <span style="font-size:13px;color:var(--text2)">${f.rubro}</span>
       <div style="display:flex;align-items:center;gap:10px">
@@ -2772,7 +2783,7 @@ window.guardarVenta = async function() {
 
   const opRefVenta = await addDoc(collection(db,"ventas"), {
     propiedad, fechaCierre,
-    tipoCliente: document.getElementById('v-tipo-cliente').value,
+    tipoCliente: {'cv':'Comprador - Vendedor','v':'Vendedor','c':'Comprador'}[document.getElementById('ventas-tipo-wrap')?.dataset.tipoOp||'cv'],
     formaPago: document.getElementById('v-forma-pago').value,
     cotizacion: cotiz,
     precioPublicacion, precioCierre,
@@ -2808,9 +2819,9 @@ function renderVentas() {
   const totalHonor = ventas.reduce((a,v)=>a+Number(v.honorarioTotal||0),0);
   const totalMF = ventas.reduce((a,v)=>a+Number(v.miIngreso||0),0);
   document.getElementById('v-facturado').textContent = 'USD '+fmt(Math.round(totalHonor));
-  document.getElementById('v-neto').textContent = 'USD '+fmt(Math.round(totalMF));
+  document.getElementById('v-mi-ingreso').textContent = 'USD '+fmt(Math.round(totalMF));
   document.getElementById('v-ops').textContent = ventas.length;
-  document.getElementById('v-prom').textContent = ventas.length ? 'USD '+fmt(Math.round(totalHonor/ventas.length)) : 'USD 0';
+  document.getElementById('v-honor-prom').textContent = ventas.length ? 'USD '+fmt(Math.round(totalHonor/ventas.length)) : 'USD 0';
   
   document.getElementById('ventas-tabla').innerHTML = ventas.map(v=>`
     <tr>
