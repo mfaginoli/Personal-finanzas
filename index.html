@@ -259,16 +259,9 @@ body { background:var(--bg); color:var(--text); font-family:var(--font); font-si
     <!-- GRÁFICO INGRESOS POR RUBRO (últimos 6 meses) -->
     <div class="card" style="margin-bottom:16px;padding:20px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-        <div class="card-title" style="margin-bottom:0">Ingresos por rubro — últimos 6 meses (USD)</div>
+        <div class="card-title" style="margin-bottom:0">Composición de ingresos — últimos 6 meses</div>
       </div>
-      <div id="chart-ingresos" style="height:200px;display:flex;align-items:flex-end;gap:8px;border-bottom:1px solid #e2e8f0;padding-bottom:0;position:relative">
-        <div style="position:absolute;top:0;left:0;right:0;bottom:0;display:flex;flex-direction:column;justify-content:space-between;pointer-events:none">
-          <div style="border-bottom:1px dashed #e2e8f0;height:0;width:100%"></div>
-          <div style="border-bottom:1px dashed #e2e8f0;height:0;width:100%"></div>
-          <div style="border-bottom:1px dashed #e2e8f0;height:0;width:100%"></div>
-          <div style="border-bottom:1px dashed #e2e8f0;height:0;width:100%"></div>
-        </div>
-      </div>
+      <div id="chart-ingresos" style="height:200px;display:flex;align-items:flex-end;gap:6px"></div>
       <div style="display:flex;gap:12px;margin-top:10px;flex-wrap:wrap" id="chart-legend">
         <span style="font-size:11px;display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#0891b2;display:inline-block"></span>Ventas</span>
         <span style="font-size:11px;display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#8b5cf6;display:inline-block"></span>Alquileres</span>
@@ -701,8 +694,9 @@ body { background:var(--bg); color:var(--text); font-family:var(--font); font-si
     <!-- ALQUILERES -->
     <div class="tab-content" id="tab-alquileres">
       <div class="metrics-grid">
-        <div class="metric"><div class="metric-label">Facturado alquileres ($)</div><div class="metric-value accent" id="al-facturado">$0</div></div>
+        <div class="metric"><div class="metric-label">Mi ingreso neto ($)</div><div class="metric-value green" id="al-neto-ars">$0</div></div>
         <div class="metric"><div class="metric-label">Mi ingreso neto (USD)</div><div class="metric-value green" id="al-neto">USD 0</div></div>
+        <div class="metric"><div class="metric-label">Facturado ($)</div><div class="metric-value accent" id="al-facturado">$0</div></div>
         <div class="metric"><div class="metric-label">Cuotas pendientes</div><div class="metric-value red" id="al-cuotas-pend">0</div></div>
         <div class="metric"><div class="metric-label">Operaciones</div><div class="metric-value" id="al-ops">0</div></div>
       </div>
@@ -781,9 +775,7 @@ body { background:var(--bg); color:var(--text); font-family:var(--font); font-si
         </div>
         <div class="form-group" id="al-colab-nombre-group" style="display:none">
           <label class="form-label">Nombre del colaborador</label>
-          <select class="form-select" id="al-colaborador-nombre">
-            <option value="">Sin colaborador</option>
-          </select>
+          <input type="text" class="form-input" id="al-colaborador-nombre" placeholder="Nombre del colaborador">
         </div>
         <div class="form-group">
           <label class="form-label">¿Facturado?</label>
@@ -793,7 +785,7 @@ body { background:var(--bg); color:var(--text); font-family:var(--font); font-si
           </select>
         </div>
 
-        <div id="al-preview" style="background:var(--surface2);border-radius:var(--r-sm);padding:14px;margin:12px 0;display:none"> style="background:var(--surface2);border-radius:var(--r-sm);padding:14px;margin:12px 0;display:none">
+        <div id="al-preview" style="background:var(--surface2);border-radius:var(--r-sm);padding:14px;margin:12px 0;display:none">
           <div class="card-title" style="margin-bottom:10px">Resumen</div>
           <div class="form-row-3">
             <div><div class="metric-label">Honorario total</div><div style="font-size:18px;font-weight:500;color:var(--accent)" id="al-prev-total">USD 0</div></div>
@@ -802,38 +794,36 @@ body { background:var(--bg); color:var(--text); font-family:var(--font); font-si
           </div>
         </div>
 
-        <div class="form-group" style="margin-top:8px">
-          <label class="form-label">¿Facturado?</label>
-          <select class="form-select" id="al-facturado-check">
-            <option value="no">No facturado</option>
-            <option value="si">Facturado</option>
-          </select>
-        </div>
-        <div class="form-group" style="margin-top:8px">
-          <label class="form-label">Fecha cobro primera cuota</label>
-          <input type="date" class="form-input" id="al-fecha-primera-cuota">
-          <div style="font-size:11px;color:#94a3b8;margin-top:4px">Las cuotas siguientes se calcularán mensualmente desde esta fecha. Generalmente entre el 1 y 10 del mes siguiente al cierre.</div>
-        </div>
         <div style="display:flex;gap:10px;margin-top:8px">
           <button class="btn btn-ghost" onclick="calcularAlquiler()">Calcular</button>
           <button class="btn btn-primary" onclick="guardarAlquiler()">Guardar operación</button>
         </div>
       </div>
 
-      <div class="card">
-        <div class="card-title">Cuotas pendientes de cobro</div>
+      <div class="card" id="cuotas-card">
+        <div class="card-title" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center" onclick="toggleSection('cuotas-body','cuotas-arrow')">
+          Cuotas pendientes de cobro
+          <span id="cuotas-arrow">▾</span>
+        </div>
+        <div id="cuotas-body">
         <table class="data-table">
           <thead><tr><th>Propiedad</th><th>Cuota</th><th>Fecha cobro</th><th>Monto USD</th><th>Estado</th><th></th></tr></thead>
           <tbody id="cuotas-tabla"></tbody>
         </table>
+        </div>
       </div>
 
       <div class="card">
-        <div class="card-title">Operaciones de alquiler</div>
+        <div class="card-title" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center" onclick="toggleSection('alq-ops-body','alq-ops-arrow')">
+          Operaciones de alquiler
+          <span id="alq-ops-arrow">▾</span>
+        </div>
+        <div id="alq-ops-body">
         <table class="data-table">
           <thead><tr><th>Fecha</th><th>Propiedad</th><th>Tipo</th><th>Facturado ($)</th><th>Cobrado (USD)</th><th>Pendiente (USD)</th><th></th></tr></thead>
           <tbody id="alquileres-tabla"></tbody>
         </table>
+        </div>
       </div>
     </div>
 
@@ -1507,7 +1497,6 @@ function setDefaultDates() {
     const el = document.getElementById(id);
     if (el) el.value = hoy;
   });
-  document.getElementById('dash-mes').textContent = new Date().toLocaleDateString('es-AR', { month:'long', year:'numeric' });
 }
 
 function initData() {
@@ -1565,45 +1554,6 @@ function fmtUSD(n) { return 'USD '+Number(n).toLocaleString('es-AR', {minimumFra
 function getMesActual() {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-}
-
-
-function renderCierre(totalGastosMes) {
-  const ingreso = Number(config.ingreso||0);
-  if (!ingreso) return;
-  
-  const sobrante = ingreso - totalGastosMes;
-  const pctGastado = Math.min((totalGastosMes/ingreso)*100, 100);
-  const pctAhorro = sobrante > 0 ? (sobrante/ingreso*100).toFixed(1) : 0;
-  const fillClass = pctGastado < 60 ? 'ok' : pctGastado < 85 ? 'warn' : 'over';
-  
-  // Cotizacion para equivalente USD
-  const usd = cotizacion && sobrante > 0 ? sobrante/cotizacion : 0;
-  
-  // Ver si estamos a fin de mes (últimos 5 días)
-  const hoy = new Date();
-  const diasRestantes = new Date(hoy.getFullYear(), hoy.getMonth()+1, 0).getDate() - hoy.getDate();
-  const mesCerrado = diasRestantes <= 5;
-  
-  document.getElementById('cierre-ingreso').textContent = '$'+fmt(ingreso);
-  document.getElementById('cierre-gastos').textContent = '$'+fmt(Math.round(totalGastosMes));
-  document.getElementById('cierre-sobrante').textContent = sobrante >= 0 ? '$'+fmt(Math.round(sobrante)) : '-$'+fmt(Math.round(Math.abs(sobrante)));
-  document.getElementById('cierre-sobrante').style.color = sobrante >= 0 ? 'var(--green)' : 'var(--red)';
-  document.getElementById('cierre-usd').textContent = usd > 0 ? 'USD '+fmt(Math.round(usd)) : cotizacion ? 'USD 0' : 'Sin cotización';
-  document.getElementById('cierre-bar').style.width = pctGastado+'%';
-  document.getElementById('cierre-bar').className = 'budget-fill '+fillClass;
-  document.getElementById('cierre-pct-label').textContent = pctGastado.toFixed(1)+'% del ingreso gastado · Ahorro real: '+pctAhorro+'%';
-  
-  const badge = document.getElementById('mes-estado-badge');
-  if (mesCerrado) {
-    badge.textContent = '✓ Fin de mes — listo para comprar USD';
-    badge.className = 'badge badge-green';
-    document.getElementById('cierre-aviso').textContent = sobrante > 0 ? 'Podés comprar USD '+fmt(Math.round(usd))+' este mes' : 'Sin sobrante este mes';
-  } else {
-    badge.textContent = 'Mes en curso — '+diasRestantes+' días restantes';
-    badge.className = 'badge badge-gold';
-    document.getElementById('cierre-aviso').textContent = 'Esperá al cierre del mes para comprar USD';
-  }
 }
 
 
@@ -2145,18 +2095,23 @@ window.renderDashboardAnalitico = function() {
   const chartEl=document.getElementById('chart-ingresos');
   if(chartEl){
     const colors={v:'#0891b2',al:'#8b5cf6',ap:'#06b6d4',ac:'#10b981',ot:'#f59e0b'};
+    const labels={v:'Ventas',al:'Alquileres',ap:'Adm. Prop.',ac:'Adm. Cons.',ot:'Otros'};
     const keys=['v','al','ap','ac','ot'];
     chartEl.innerHTML=datos6.map(d=>{
-      const totalH = 175;
-      const bars = keys.filter(k=>d[k]>0).map(k=>{
-        const h = Math.round(d[k]/maxVal*totalH);
-        return `<div style="background:${colors[k]};height:${h}px;width:100%" title="${k.toUpperCase()}: USD ${fmt(Math.round(d[k]))}"></div>`;
-      }).reverse().join('');
-      const label=d.mes.split('-')[1]+'/'+d.mes.split('-')[0].slice(2);
+      const total = d.total || 0;
+      const label = d.mes.split('-')[1]+'/'+d.mes.split('-')[0].slice(2);
       const esSeleccionado = d.mes === mesSel;
+      // 100% stacked bars - each segment is % of total
+      const bars = total > 0
+        ? keys.filter(k=>d[k]>0).map(k=>{
+            const pct = (d[k]/total*100).toFixed(1);
+            const h = Math.round(d[k]/total*170);
+            return `<div style="background:${colors[k]};height:${h}px;width:100%;min-height:2px" title="${labels[k]}: ${pct}% (USD ${fmt(Math.round(d[k]))})"></div>`;
+          }).reverse().join('')
+        : '<div style="background:#f1f5f9;height:170px;width:100%;border-radius:4px"></div>';
       return `<div style="flex:1;display:flex;flex-direction:column;align-items:center">
-        <div style="font-size:9px;color:${esSeleccionado?'#0891b2':'#94a3b8'};margin-bottom:3px;font-weight:${esSeleccionado?'600':'400'}">${d.total>0?'USD '+fmt(Math.round(d.total)):''}</div>
-        <div style="display:flex;flex-direction:column-reverse;width:90%;height:${totalH}px;border-radius:4px;overflow:hidden;background:#f1f5f9">${bars}</div>
+        <div style="font-size:9px;color:${esSeleccionado?'#0891b2':'#94a3b8'};margin-bottom:3px;font-weight:${esSeleccionado?'600':'400'};text-align:center">${total>0?'USD '+fmt(Math.round(total)):''}</div>
+        <div style="display:flex;flex-direction:column-reverse;width:85%;height:170px;border-radius:4px;overflow:hidden;background:#f1f5f9">${bars}</div>
         <div style="font-size:10px;color:${esSeleccionado?'#0891b2':'#64748b'};margin-top:5px;font-weight:${esSeleccionado?'600':'400'}">${label}</div>
       </div>`;
     }).join('');
@@ -2972,6 +2927,9 @@ window.guardarAlquiler = async function() {
     pctHonorario: pct*100, cotizacion: cotiz,
     honorarioTotal: honorTotal, pctMF: pctMF*100, miIngreso,
     pctInmo: pctInmo*100, pctColab: pctColab*100,
+    colaboradorNombre: document.getElementById('al-colaborador-nombre')?.value||'',
+    montoInmo: Math.round(honorTotal*pctInmo),
+    montoColab: Math.round(honorTotal*pctColab),
     cuotas, porCuota, facturado: document.getElementById('al-facturado-check').value === 'si', createdAt: new Date().toISOString()
   });
   
@@ -3015,11 +2973,15 @@ function initCuotas() {
 }
 
 function renderAlquileres() {
-  // Alquileres facturan en pesos
-  const totalHonorARS = alquileres_ops.reduce((a,v)=>a+Number(v.honorarioTotal||0)*Number(v.cotizacion||0),0);
-  const totalMF = alquileres_ops.reduce((a,v)=>a+Number(v.miIngreso||0),0);
-  document.getElementById('al-facturado').textContent = '$'+fmt(Math.round(totalHonorARS));
-  document.getElementById('al-neto').textContent = 'USD '+fmt(Math.round(totalMF));
+  const ops_facturadas = alquileres_ops.filter(v=>v.facturado);
+  const totalHonorARS_fac = ops_facturadas.reduce((a,v)=>a+Number(v.honorarioTotal||0)*Number(v.cotizacion||1),0);
+  const totalHonorARS = alquileres_ops.reduce((a,v)=>a+Number(v.honorarioTotal||0)*Number(v.cotizacion||1),0);
+  const totalMF_ARS = alquileres_ops.reduce((a,v)=>a+Number(v.miIngreso||0)*Number(v.cotizacion||1),0);
+  const totalMF_USD = alquileres_ops.reduce((a,v)=>a+Number(v.miIngreso||0),0);
+  const elAlNeto = document.getElementById('al-neto-ars');
+  if(elAlNeto) elAlNeto.textContent = '$'+fmt(Math.round(totalMF_ARS));
+  document.getElementById('al-facturado').textContent = '$'+fmt(Math.round(totalHonorARS_fac));
+  document.getElementById('al-neto').textContent = 'USD '+fmt(Math.round(totalMF_USD));
   document.getElementById('al-ops').textContent = alquileres_ops.length;
   
   // Calcular cobrado por operacion
@@ -3031,52 +2993,66 @@ function renderAlquileres() {
   });
 
   document.getElementById('alquileres-tabla').innerHTML = alquileres_ops.map(a=>{
-    const progreso = cobradoPorOp[a.id] || { cobrado: 0, total: Number(a.miIngreso||0) };
-    const pct = progreso.total > 0 ? Math.round((progreso.cobrado/progreso.total)*100) : 0;
+    const cuotasOp = cuotas_data.filter(c=>c.opId===a.id);
+    const cuotasCobradas = cuotasOp.filter(c=>c.cobrada).length;
+    const totalCuotas = cuotasOp.length || a.cuotas || 1;
+    // Calculate in ARS (cuotas store USD, multiply by cotizacion)
+    const cotiz = a.cotizacion || 1;
+    const totalUSD = cuotasOp.length > 0 ? cuotasOp.reduce((s,c)=>s+Number(c.monto||0),0) : Number(a.miIngreso||0);
+    const cobradoUSD = cuotasOp.filter(c=>c.cobrada).reduce((s,c)=>s+Number(c.monto||0),0);
+    const pendienteUSD = totalUSD - cobradoUSD;
+    const pct = totalUSD > 0 ? Math.round(cobradoUSD/totalUSD*100) : 0;
     const fillClass = pct === 100 ? 'ok' : pct > 0 ? 'warn' : '';
-    const cuotasCobradas = cuotas_data.filter(c=>c.opId===a.id&&c.cobrada).length;
-    const totalCuotas = cuotas_data.filter(c=>c.opId===a.id).length;
     return `<tr>
       <td>${formatFecha(a.fecha)}</td>
       <td style="font-weight:500">${a.propiedad}</td>
-      <td><span class="badge badge-blue">${a.tipo}</span></td>
-      <td style="color:#0891b2">$${fmt(Math.round((a.honorarioTotal||0)*(a.cotizacion||0)))}<span style="font-size:10px;color:#94a3b8;margin-left:4px">≈ USD ${fmt(Math.round(a.honorarioTotal||0))}</span></td>
+      <td><span class="badge badge-blue">${a.tipo||'Alquiler'}</span></td>
+      <td style="color:#0891b2">$${fmt(Math.round((a.honorarioTotal||0)*(cotiz)))}<br><span style="font-size:10px;color:#94a3b8">≈ USD ${fmt(Math.round(a.honorarioTotal||0))}</span></td>
       <td>
-        <div style="font-size:12px;font-weight:500;color:#059669;margin-bottom:3px">USD ${fmt(Math.round(progreso.cobrado))}</div>
-        <div class="budget-bar" style="width:120px;display:inline-block"><div class="budget-fill ${fillClass}" style="width:${pct}%"></div></div>
-        <div style="font-size:10px;color:#94a3b8;margin-top:2px">${cuotasCobradas}/${totalCuotas||a.cuotas} cuotas · ${pct}%</div>
+        <div style="font-size:12px;font-weight:500;color:#059669;margin-bottom:3px">$${fmt(Math.round(cobradoUSD*cotiz))} cobrado</div>
+        <div class="budget-bar" style="width:100px;display:inline-block"><div class="budget-fill ${fillClass}" style="width:${pct}%"></div></div>
+        <div style="font-size:10px;color:#94a3b8;margin-top:2px">${cuotasCobradas}/${totalCuotas} cuotas · ${pct}%</div>
       </td>
-      <td style="color:#d97706;font-size:12px">USD ${fmt(Math.round((progreso.total||0)-(progreso.cobrado||0)))} pendiente</td>
-      <td style="display:flex;gap:4px"><button class="btn btn-ghost btn-sm" onclick="editarAlquiler('${a.id}')">✏️</button><button class="btn btn-danger btn-sm" onclick="eliminarAlquiler('${a.id}')">×</button></td>
+      <td style="color:${pendienteUSD>0?'#d97706':'#059669'};font-size:12px">${pendienteUSD>0?'$'+fmt(Math.round(pendienteUSD*cotiz))+' pend.':'✓ Completo'}</td>
+      <td style="white-space:nowrap"><button class="btn btn-ghost btn-sm" onclick="editarAlquiler('${a.id}')">✏️</button> <button class="btn btn-danger btn-sm" onclick="eliminarAlquiler('${a.id}')">×</button></td>
     </tr>`;
   }).join('') || '<tr><td colspan="7" class="empty">Sin operaciones</td></tr>';
 }
 
 function renderCuotas() {
-  const pendientes = cuotas_data.filter(c=>!c.cobrada);
-  const vencidas = cuotas_data.filter(c=>!c.cobrada && c.fechaCobro && c.fechaCobro < new Date().toISOString().split('T')[0]).length;
-  document.getElementById('al-cuotas-pend').textContent = pendientes.length + (vencidas > 0 ? ' ('+vencidas+' vencidas)' : '');
-  // Ordenar cuotas por fecha de cobro
-  const cuotasOrdenadas = [...cuotas_data].sort((a,b) => {
-    const fa = a.fechaCobro || a.fecha || '';
-    const fb = b.fechaCobro || b.fecha || '';
-    return fa.localeCompare(fb);
-  });
-  
   const hoy = new Date().toISOString().split('T')[0];
-  
-  document.getElementById('cuotas-tabla').innerHTML = cuotasOrdenadas.map(c=>{
+  const pendientes = cuotas_data.filter(c=>!c.cobrada);
+  const cobradas = cuotas_data.filter(c=>c.cobrada);
+  const vencidas = pendientes.filter(c=>c.fechaCobro && c.fechaCobro < hoy).length;
+
+  // Update badge
+  const badge = document.getElementById('al-cuotas-pend');
+  if(badge) badge.textContent = pendientes.length + (vencidas > 0 ? ' ('+vencidas+' venc.)' : '');
+
+  // Sort: pending first by date, then cobradas
+  const pendSort = [...pendientes].sort((a,b)=>(a.fechaCobro||'').localeCompare(b.fechaCobro||''));
+  const cobSort = [...cobradas].sort((a,b)=>(b.fechaCobro||'').localeCompare(a.fechaCobro||''));
+  const todas = [...pendSort, ...cobSort];
+
+  // Hide cuotas section if no cuotas at all
+  const cuotasCard = document.getElementById('cuotas-card');
+  if(cuotasCard) cuotasCard.style.display = cuotas_data.length > 0 ? 'block' : 'none';
+
+  const cuotasTable = document.getElementById('cuotas-tabla');
+  if(!cuotasTable) return;
+
+  cuotasTable.innerHTML = todas.map(c=>{
     const vencida = !c.cobrada && c.fechaCobro && c.fechaCobro < hoy;
     const proxima = !c.cobrada && c.fechaCobro && c.fechaCobro === hoy;
-    return `<tr style="${vencida?'background:#fef2f2':''}">
+    return `<tr style="${c.cobrada?'opacity:0.6':''}${vencida?';background:#fef2f2':''}">
       <td style="font-weight:500">${c.propiedad}</td>
       <td style="color:#475569">${c.cuotaNum}/${c.totalCuotas}</td>
-      <td style="color:${vencida?'#dc2626':'#d97706'}">${c.fechaCobro ? formatFecha(c.fechaCobro) : '-'}${vencida?' ⚠️':proxima?' 📅':''}</td>
-      <td style="color:#d97706;font-weight:500">USD ${fmt(Math.round(c.monto))}</td>
+      <td style="color:${vencida?'#dc2626':c.cobrada?'#059669':'#d97706'}">${c.fechaCobro ? formatFecha(c.fechaCobro) : '-'}${vencida?' ⚠️':proxima?' 📅':''}</td>
+      <td style="color:#d97706;font-weight:500">$${fmt(Math.round((c.monto||0)*(c.cotizacion||c.cotiz||1)))}<span style="font-size:10px;color:#94a3b8;margin-left:4px">≈ USD ${fmt(Math.round(c.monto||0))}</span></td>
       <td><span class="badge ${c.cobrada?'badge-green':vencida?'badge-red':'badge-gold'}">${c.cobrada?'Cobrada':vencida?'Vencida':'Pendiente'}</span></td>
-      <td style="display:flex;gap:4px">
+      <td style="display:flex;gap:4px;align-items:center">
         <button class="btn btn-ghost btn-sm" onclick="editarFechaCuota('${c.id}','${c.fechaCobro||''}')">✏️</button>
-        <button class="btn btn-ghost btn-sm" onclick="toggleCuota('${c.id}',${c.cobrada})">${c.cobrada?'Desmarcar':'✓ Cobrar'}</button>
+        <button class="btn btn-ghost btn-sm" onclick="toggleCuota('${c.id}',${c.cobrada})" style="white-space:nowrap">${c.cobrada?'↩ Desmarcar':'✓ Cobrar'}</button>
         <button class="btn btn-danger btn-sm" onclick="eliminarCuota('${c.id}')">×</button>
       </td>
     </tr>`;
@@ -3084,7 +3060,7 @@ function renderCuotas() {
 }
 
 window.toggleCuota = async function(id, current) {
-  await updateDoc(doc(db,"cuotas",id), { cobrada: !current });
+  await updateDoc(doc(db,"cuotas",id), { cobrada: !current, fechaCobrada: !current ? new Date().toISOString().split('T')[0] : '' });
 }
 
 window.eliminarCuota = async function(id) {
@@ -3285,6 +3261,15 @@ function formatFecha(f) {
 }
 
 // NAVIGATION
+window.toggleSection = function(bodyId, arrowId) {
+  const body = document.getElementById(bodyId);
+  const arrow = document.getElementById(arrowId);
+  if(!body) return;
+  const isOpen = body.style.display !== 'none';
+  body.style.display = isOpen ? 'none' : 'block';
+  if(arrow) arrow.textContent = isOpen ? '▸' : '▾';
+};
+
 window.showPage = function(page, el) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
