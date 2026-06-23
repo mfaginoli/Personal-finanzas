@@ -43,7 +43,7 @@
   <div id="fix-preview"></div>
   <button class="btn" id="btn-fix-cuotas" onclick="fixCuotas()" disabled>2. Aplicar correcciones</button>
 
-  <h2>Ventas 2025 (5 operaciones completas)</h2>
+  <h2>Ventas 2025 (2 operaciones pendientes — M. Garcia, N. Carranza, Bedoya ya importadas)</h2>
   <table id="tabla-ventas2025"></table>
   <button class="btn" id="btn-ventas2025" onclick="importar('ventas2025')">Importar Ventas 2025</button>
 
@@ -52,10 +52,10 @@
   <table id="tabla-ventas-extra"></table>
   <button class="btn" id="btn-ventasExtra" onclick="importar('ventasExtra')">Importar ventas adicionales</button>
 
-  <h2>Alquileres 2025 (11 operaciones)</h2>
-  <p class="note">Se excluye la fila 12 (Ayacucho 139 5C) por datos incompletos en la planilla.</p>
+  <h2>Alquileres 2025 ✓ Ya cargados manualmente</h2>
+  <p class="note">Los 12 alquileres 2025 ya están en Firestore. No importar para evitar duplicados.</p>
   <table id="tabla-alquileres2025"></table>
-  <button class="btn" id="btn-alquileres2025" onclick="importar('alquileres2025')">Importar Alquileres 2025</button>
+  <button class="btn" id="btn-alquileres2025" disabled style="background:#475569;cursor:not-allowed">✓ Ya importados</button>
 
   <h2>Alquileres 2026 (15 operaciones)</h2>
   <p class="note">Se excluye "D. del Campillo 1672 PH 5" porque el monto en la planilla es "1100/1200" (no es un número único, necesita revisión manual).</p>
@@ -118,49 +118,8 @@ const fmt = n => Math.round(n).toLocaleString('es-AR');
 const log = msg => { document.getElementById('log').textContent += msg + '\n'; };
 
 // ================= VENTAS 2025 =================
+// M. Garcia, N. Carranza, Bedoya ya estaban cargados manualmente — solo faltan estos 2
 const ventas2025 = [
-  {
-    propiedad: "M. Garcia 1371 2B", tipoOp: "cv", tipoCliente: "Comprador - Vendedor",
-    fechaIngresoProp: "2025-01-06", fechaIngresoLead: "",
-    fechaReserva: "2025-02-13", fechaCierre: "2025-02-24", diasCierre: 11,
-    formaPago: "Contado", cotizacion: 1,
-    precioPublicacion: 27000, precioCierre: 26500, margen: -0.01852,
-    pctHonorario: 6, honorarioTotal: 1590,
-    pctMF: 75, miIngreso: 1192.5,
-    pctInmo: 25, honorInmo: 397.5,
-    pctColab: 0, honorColab: 0,
-    captador: "Matias", origenCaptacion: "Adm. / Ref", tipoCaptacion: "Exclusiva",
-    origenLead: "ZonaProp", manejoLead: "Matias",
-    facturado: false, liqInmo: false, liqInmoFecha: "", liqColab: false, liqColabFecha: ""
-  },
-  {
-    propiedad: "N. Carranza 3674", tipoOp: "v", tipoCliente: "Vendedor",
-    fechaIngresoProp: "2025-03-17", fechaIngresoLead: "",
-    fechaReserva: "2025-05-05", fechaCierre: "2025-05-26", diasCierre: 21,
-    formaPago: "Contado", cotizacion: 1,
-    precioPublicacion: 160000, precioCierre: 155000, margen: -0.03125,
-    pctHonorario: 3, honorarioTotal: 4650,
-    pctMF: 75, miIngreso: 3487.5,
-    pctInmo: 25, honorInmo: 1162.5,
-    pctColab: 0, honorColab: 0,
-    captador: "Matias", origenCaptacion: "Amigo", tipoCaptacion: "Exclusiva",
-    origenLead: "Selecta", manejoLead: "Selecta",
-    facturado: false, liqInmo: false, liqInmoFecha: "", liqColab: false, liqColabFecha: ""
-  },
-  {
-    propiedad: "Bedoya 927 3 12", tipoOp: "c", tipoCliente: "Comprador",
-    fechaIngresoProp: "2025-03-11", fechaIngresoLead: "",
-    fechaReserva: "", fechaCierre: "2025-06-26", diasCierre: 0,
-    formaPago: "Contado", cotizacion: 1,
-    precioPublicacion: 63000, precioCierre: 57000, margen: -0.09524,
-    pctHonorario: 2.63, honorarioTotal: 1499.10,
-    pctMF: 75, miIngreso: 1124.33,
-    pctInmo: 25, honorInmo: 374.78,
-    pctColab: 0, honorColab: 0,
-    captador: "Gambero", origenCaptacion: "Colega", tipoCaptacion: "Referido",
-    origenLead: "Matias", manejoLead: "",
-    facturado: false, liqInmo: false, liqInmoFecha: "", liqColab: false, liqColabFecha: ""
-  },
   {
     propiedad: "R. Poincare 7637", tipoOp: "v", tipoCliente: "Vendedor",
     fechaIngresoProp: "2025-06-10", fechaIngresoLead: "",
